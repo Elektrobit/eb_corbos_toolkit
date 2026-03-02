@@ -1,0 +1,33 @@
+{
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23
+    },
+    "include": [
+        "ebclfsaBasePreset.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "fastdev-li-qemuarm64",
+            "inherits": "base",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-qemuarm64/toolchain-fastdev-li-qemuarm64.cmake",
+            "environment": {
+                "LD_LIBRARY_PATH": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib:/workspace/sysroots/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib/x86_64-linux-gnu"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64"
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "fastdev-li-qemuarm64",
+            "configurePreset": "fastdev-li-qemuarm64",
+            "inherits": "base"
+        }
+    ]
+}

@@ -1,0 +1,42 @@
+{
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23
+    },
+    "include": [
+        "ebclfsaBasePreset.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "base-hi",
+            "inherits": "base",
+            "hidden": true
+        },
+        {
+            "name": "fastdev-hi-qemuarm64",
+            "inherits": "base-hi",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-qemuarm64/toolchain-fastdev-hi-qemuarm64.cmake",
+            "environment": {
+                "LD_LIBRARY_PATH": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib:/workspace/sysroots/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib/x86_64-linux-gnu"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64"
+                },
+                "IS_FASTDEV": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "fastdev-hi-qemuarm64",
+            "configurePreset": "fastdev-hi-qemuarm64",
+            "inherits": "base"
+        }
+    ]
+}

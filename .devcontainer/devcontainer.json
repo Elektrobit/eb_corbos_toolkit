@@ -1,0 +1,33 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+    "name": "EBcL SDK",
+    "image": "artifactory.elektrobit.com/eb_corbos_linux-snapshots-docker/ebcl-sdk/devcontainer-amd64:main",
+    // set the tag to local if you are using a locally built image
+    //"image": "artifactory.elektrobit.com/eb_corbos_linux-releases-docker/ebcl-sdk/devcontainer-amd64:local",
+    "postStartCommand": "${PWD}/.devcontainer/enter_container.sh",
+    "postCreateCommand": "${PWD}/.devcontainer/setup_binfmt_support.sh",
+    "containerUser": "developer",
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/developer/.ssh,type=bind,consistency=cached",
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gnupg,target=/home/developer/.gnupg,type=bind,consistency=cached",
+        "source=/dev,target=/dev,type=bind"
+    ],
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "workspaceFolder": "/workspace",
+    "privileged": true,
+    "runArgs": [
+        "--hostname", "ebcl-sdk"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools-extension-pack@1.3.1"
+            ]
+        },
+        "settings": {
+            "cmake.configureOnOpen": false,
+            "taskExplorer.showHiddenWsTasks": false
+        }
+    }
+}

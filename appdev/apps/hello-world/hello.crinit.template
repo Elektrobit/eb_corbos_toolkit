@@ -1,0 +1,4 @@
+NAME = hello
+COMMAND = /@CMAKE_INSTALL_BINDIR@/hello
+DEPENDS = ""
+RESPAWN = NO

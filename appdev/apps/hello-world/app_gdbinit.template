@@ -1,0 +1,2 @@
+set remote exec-file /@CMAKE_INSTALL_BINDIR@/hello
+set sysroot @CMAKE_SYSROOT@

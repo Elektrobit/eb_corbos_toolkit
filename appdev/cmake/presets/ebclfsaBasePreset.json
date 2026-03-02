@@ -1,0 +1,40 @@
+{
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "environment": {
+                "DESTDIR": "${sourceDir}/build/${presetName}/install",
+                "SYSROOT_BASE":"/workspace/sysroots",
+                "TOOLCHAIN_BASE": "${sourceDir}/../../cmake/toolchain"
+            },
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                },
+                "CMAKE_BUILD_TYPE": {
+                    "type": "STRING",
+                    "value": "Debug"
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "jobs": 8,
+            "targets" : [
+                "install"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23
+    },
+    "include": [
+        "../../cmake/presets/ebclfsaLiPreset.json"
+    ]
+}

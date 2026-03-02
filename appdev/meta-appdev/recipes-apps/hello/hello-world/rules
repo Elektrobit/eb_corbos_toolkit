@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+
+# Copyright 2025 Elektrobit Automotive GmbH
+# All rights reserved
+
+# Enable hardening flags
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+ifeq ($(DEB_HOST_ARCH),arm64)
+# Use toolchain file for LI arm64 musl-clang builds,
+# we only need the base.cmake as everything else is related to cross building:
+CMAKE_ARGS += -DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/cmake/toolchain/common/base.cmake
+export TOOLCHAIN_BASE=${CURDIR}/cmake/toolchain
+endif
+
+override_dh_auto_configure:
+	dh_auto_configure -- $(CMAKE_ARGS)

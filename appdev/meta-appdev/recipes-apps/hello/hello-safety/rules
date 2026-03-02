@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+
+# Copyright 2025 Elektrobit Automotive GmbH
+# All rights reserved
+
+# Enable hardening flags
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+# Workaround for dh_dwz failing to parse the default debug symbol format from clang-20
+CFLAGS += -gdwarf-4
+
+ifeq ($(DEB_HOST_ARCH),arm64)
+# Use toolchain file for HI arm64 musl-clang builds:
+CMAKE_ARGS += -DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/cmake/toolchain/fastdev-qemuarm64/toolchain-fastdev-hi-qemuarm64.cmake
+export TOOLCHAIN_BASE=${CURDIR}/cmake/toolchain
+else
+# For other architectures, just use plain clang as there is no lisa-libc for anything but arm64
+CC := clang-20
+endif
+
+override_dh_auto_configure:
+	dh_auto_configure -- $(CMAKE_ARGS)
