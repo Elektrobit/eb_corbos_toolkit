@@ -1,7 +1,7 @@
 # EB corbos Toolkit
 
 This repository provides the application development workspace for the EB corbos Toolkit by [Elektrobit Automotive GmbH](https://www.elektrobit.com/).
-It includes example applications and build tooling for developing software targeting EB corbos product line.
+It includes example applications and build tooling for developing software targeting the EB corbos product line.
 You can explore this car software platform and develop applications, build images, run and debug on hardware and in cloud.
 
 ## Getting Started
@@ -22,4 +22,5 @@ Issue templates are provided for bug reports, enhancement requests, and document
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License.
+See [LICENSE](LICENSE) for details.
