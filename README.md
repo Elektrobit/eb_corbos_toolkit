@@ -10,11 +10,6 @@ Detailed documentation, including setup instructions and user guides, is availab
 Check the [Releases](../../releases) page and download the archive attached to the latest release.
 Currently, this is [`eb_corbos_toolkit_2.0.0-beta1.tar.gz`](https://github.com/Elektrobit/eb_corbos_toolkit/releases/download/v2.0.0-beta1/eb_corbos_toolkit_2.0.0-beta1.tar.gz).
 
-## Example Applications
-
-- **hello-world** — A simple application demonstrating basic build and deployment.
-- **hello-safety** — An application demonstrating safety-relevant (HI/LI) build configurations.
-
 ## Reporting Issues
 
 If you encounter a problem or have a suggestion, please open an issue on the [GitHub Issues](../../issues) page.
