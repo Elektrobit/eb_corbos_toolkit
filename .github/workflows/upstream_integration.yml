@@ -1,0 +1,167 @@
+name: Update Toolkit from Internal Release Archive
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_url:
+        description: "URL for the toolkit tar.gz archive"
+        required: true
+        type: string
+      artifactory_token:
+        description: "Authentication bearer token"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-from-archive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authorize triggering actor
+        env:
+          ALLOWED_ACTORS: ${{ vars.WORKFLOW_ALLOWED_ACTORS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${ALLOWED_ACTORS:-}" ]]; then
+            echo "::error::Repository variable WORKFLOW_ALLOWED_ACTORS is not set."
+            echo "::error::Set it to a comma-separated list of GitHub usernames allowed to run this workflow."
+            exit 1
+          fi
+
+          normalized="${ALLOWED_ACTORS// /}"
+          if [[ ",${normalized}," != *",${GITHUB_ACTOR},"* ]]; then
+            echo "::error::Actor is not authorized to run this workflow."
+            exit 1
+          fi
+
+          echo "Actor authorization succeeded."
+
+      - name: Verify runner prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v curl >/dev/null
+          command -v tar >/dev/null
+          command -v docker >/dev/null
+          command -v jq >/dev/null
+
+      - name: Download and unpack archive
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ARTIFACT_URL="$(jq -r '.inputs.artifact_url // empty' "${GITHUB_EVENT_PATH}")"
+          ARTIFACTORY_TOKEN="$(jq -r '.inputs.artifactory_token // empty' "${GITHUB_EVENT_PATH}")"
+
+          if [[ -z "${ARTIFACTORY_TOKEN:-}" ]]; then
+            echo "::error::Required workflow input artifactory_token is not set."
+            exit 1
+          fi
+
+          if [[ -z "${ARTIFACT_URL:-}" ]]; then
+            echo "::error::Required workflow input artifact_url is not set."
+            exit 1
+          fi
+
+          # Treat the manual input URL as sensitive operational data.
+          echo "::add-mask::${ARTIFACT_URL}"
+          echo "::add-mask::${ARTIFACTORY_TOKEN}"
+
+          tmp_dir="$(mktemp -d)"
+          archive_path="${tmp_dir}/toolkit.tar.gz"
+          extract_root="${tmp_dir}/extracted"
+
+          mkdir -p "${extract_root}"
+
+          echo "Starting archive download (this may take a while for large files)..."
+          echo "Download target: ${archive_path}"
+
+          curl \
+            --fail \
+            --progress-bar \
+            --show-error \
+            --location \
+            --header "Authorization: Bearer ${ARTIFACTORY_TOKEN}" \
+            --output "${archive_path}" \
+            --url "${ARTIFACT_URL}"
+
+          archive_size_bytes="$(wc -c < "${archive_path}")"
+          archive_size_mib="$(awk "BEGIN { printf \"%.2f\", ${archive_size_bytes}/1024/1024 }")"
+          echo "Download complete: ${archive_size_bytes} bytes (${archive_size_mib} MiB)."
+
+          echo "Starting archive extraction into ${extract_root}..."
+
+          tar -xzf "${archive_path}" -C "${extract_root}"
+
+          echo "Extraction complete."
+
+          echo "TMP_WORK_DIR=${tmp_dir}" >> "${GITHUB_ENV}"
+          echo "EXTRACT_ROOT=${extract_root}" >> "${GITHUB_ENV}"
+
+      - name: Validate extracted layout
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          image_archive="${EXTRACT_ROOT}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst"
+          run_script="${EXTRACT_ROOT}/eb_corbos_toolkit/workspace/scripts/run.sh"
+
+          if [[ ! -f "${image_archive}" ]]; then
+            echo "::error::Expected container archive path not found in extracted payload."
+            exit 1
+          fi
+
+          if [[ ! -f "${run_script}" ]]; then
+            echo "::error::Expected eb_corbos_toolkit/workspace/scripts/run.sh not found in extracted payload."
+            exit 1
+          fi
+
+          chmod +x "${run_script}"
+
+      - name: Load container image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker load -i "${EXTRACT_ROOT}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst"
+
+      - name: "Fix BitBake execution issue on Ubuntu 23.10+"
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo tee /etc/apparmor.d/bitbake > /dev/null <<EOF
+          abi <abi/4.0>,
+          include <tunables/global>
+          profile bitbake /**/bitbake/bin/bitbake flags=(unconfined) {
+          userns,
+          }
+          EOF
+          sudo apparmor_parser -r /etc/apparmor.d/bitbake
+
+      - name: Run kas build from extracted run.sh
+        shell: bash
+        run: |
+          set -euo pipefail
+          workspace_root="${EXTRACT_ROOT}/eb_corbos_toolkit/workspace"
+          run_script="${workspace_root}/scripts/run.sh"
+
+          cd "${workspace_root}"
+          "${run_script}" -d -- kas build --target fastdev kas/public.yml
+
+      - name: Cleanup temporary files
+        #  not really needed as the runner is ephemeral
+        if: false
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${TMP_WORK_DIR:-}" && -d "${TMP_WORK_DIR}" ]]; then
+            sudo rm -rf "${TMP_WORK_DIR}"
+          fi
+
+      # Future extension point:
+      # - Create/update branch with generated content
+      # - Open pull request against this repository
