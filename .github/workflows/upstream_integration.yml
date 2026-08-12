@@ -100,39 +100,37 @@ jobs:
 
           echo "Extraction complete."
 
-          echo "TMP_WORK_DIR=${tmp_dir}" >> "${GITHUB_ENV}"
-          echo "EXTRACT_ROOT=${extract_root}" >> "${GITHUB_ENV}"
+          cat >> "${GITHUB_ENV}" << EOF
+          TMP_WORK_DIR=${tmp_dir}
+          EXTRACT_ROOT=${extract_root}
+          WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
+          IMAGE_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
+          RUN_SCRIPT=${extract_root}/eb_corbos_toolkit/workspace/scripts/run.sh
+          EOF
 
       - name: Validate extracted layout
         shell: bash
         run: |
-          set -euo pipefail
-
-          image_archive="${EXTRACT_ROOT}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst"
-          run_script="${EXTRACT_ROOT}/eb_corbos_toolkit/workspace/scripts/run.sh"
-
-          if [[ ! -f "${image_archive}" ]]; then
+          if [[ ! -f "${IMAGE_ARCHIVE}" ]]; then
             echo "::error::Expected container archive path not found in extracted payload."
             exit 1
           fi
 
-          if [[ ! -f "${run_script}" ]]; then
+          if [[ ! -f "${RUN_SCRIPT}" ]]; then
             echo "::error::Expected eb_corbos_toolkit/workspace/scripts/run.sh not found in extracted payload."
             exit 1
           fi
 
-          chmod +x "${run_script}"
+          chmod +x "${RUN_SCRIPT}"
 
       - name: Load container image
         shell: bash
         run: |
-          set -euo pipefail
-          docker load -i "${EXTRACT_ROOT}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst"
+          docker load -i "${IMAGE_ARCHIVE}"
 
       - name: "Fix BitBake execution issue on Ubuntu 23.10+"
         shell: bash
         run: |
-          set -euo pipefail
           sudo tee /etc/apparmor.d/bitbake > /dev/null <<EOF
           abi <abi/4.0>,
           include <tunables/global>
@@ -144,20 +142,64 @@ jobs:
 
       - name: Run kas build from extracted run.sh
         shell: bash
+        working-directory: ${{ env.WORKSPACE_ROOT }}
         run: |
-          set -euo pipefail
-          workspace_root="${EXTRACT_ROOT}/eb_corbos_toolkit/workspace"
-          run_script="${workspace_root}/scripts/run.sh"
+          "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
 
-          cd "${workspace_root}"
-          "${run_script}" -d -- kas build --target fastdev kas/public.yml
+      - name: Test the fastdev image in qemu
+        shell: bash
+        working-directory: ${{ env.WORKSPACE_ROOT }}
+        run: |
+          # run dev container in detached mode and keep it running
+          export EXTRA_DOCKER_OPTIONS="-d --log-driver local"
+          LOG_FILE=$(mktemp -t ebcl_run_devcontainer-XXXXXX.log 2>/dev/null) || \
+            LOG_FILE="/tmp/ebcl_run_devcontainer.log"
+
+          echo "Starting devcontainer in the background"
+          DEV_CONTAINER_ID=$("${RUN_SCRIPT}" -d -- bash -c "sleep infinity" 2>&1 | tee "$LOG_FILE" | grep -oE '^[0-9a-f]{64}$')
+          if [[ -z "${DEV_CONTAINER_ID}" ]]; then
+              echo "::error::Failed to start devcontainer. Log output:"
+              cat "$LOG_FILE"
+              exit 1
+          fi
+          sleep 10
+
+          devcontainer_exec()
+          {
+              docker exec "$DEV_CONTAINER_ID" "$@"
+          }
+
+          echo "Running fastdev in qemu in background, logging to qemu.log"
+          devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
+          devcontainer_exec bash -c \
+            "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
+
+          echo "Terminating fastdev"
+          devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
+
+          echo "Waiting for fastdev to power down"
+          max_tries=20
+          msg="Power down"
+          log="$WORKSPACE_ROOT/qemu.log"
+
+          for i in $(seq 1 "$max_tries"); do
+              if grep -q "${msg}" "${log}" 2>/dev/null; then
+                  echo "Waiting for \"$msg\" message in $log succeeded"
+                  exit 0
+              fi
+              echo "Waiting for \"$msg\" message in $log ... ($i/$max_tries)"
+              sleep 1
+          done
+          echo "Error: Waiting for \"$msg\" message in $log timed out!"
+          cat "${log}"
+          exit 1
+
 
       - name: Cleanup temporary files
         #  not really needed as the runner is ephemeral
         if: false
         shell: bash
         run: |
-          set -euo pipefail
           if [[ -n "${TMP_WORK_DIR:-}" && -d "${TMP_WORK_DIR}" ]]; then
             sudo rm -rf "${TMP_WORK_DIR}"
           fi
