@@ -258,7 +258,8 @@ jobs:
           done < <(find . -mindepth 1 -maxdepth 1 -print0)
 
           # Copy the upstream workspace on top, preserving flags, mtimes, ownership.
-          cp -a "${WORKSPACE_ROOT}/." .
+          # Ignore the "prebuilt" and "build" sub-folders.
+          rsync -a --exclude='prebuilt' --exclude='build' "${WORKSPACE_ROOT}/." .
 
       - name: Commit integrated upstream content
         working-directory: integration-repo
