@@ -341,8 +341,12 @@ jobs:
           echo "Rewrote image tag to: ${new_tag}"
           
           git add "${devcontainer_json}" "${run_sh}"
-          git commit -am "Rewrite devcontainer image tag for PR"
-          git push origin "HEAD:${INTEGRATION_BRANCH}"
+          if git diff --cached --quiet; then
+            echo "Tags already match; nothing to commit."
+          else
+            git commit -m "Rewrite devcontainer image tag for PR"
+            git push origin "HEAD:${INTEGRATION_BRANCH}"
+          fi
 
       - name: Update container tags and push to registry
         working-directory: integration-repo
