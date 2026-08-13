@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write   # create the tag + Release, upload assets
+  packages: write   # push containers to ghcr.io
 
 jobs:
   build-from-archive:
@@ -108,7 +109,10 @@ jobs:
           TMP_WORK_DIR=${tmp_dir}
           EXTRACT_ROOT=${extract_root}
           WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
-          IMAGE_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
+          DEVCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
+          BUILDCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/buildcontainer-trixie-ebclfsa-amd64.docker-archive.zst
+          DEVCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd6
+          BUILDCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64
           RUN_SCRIPT=${extract_root}/eb_corbos_toolkit/workspace/scripts/run.sh
           BITBAKE_EXECUTION_FIXER=${extract_root}/eb_corbos_toolkit/workspace/.devcontainer/scripts/check_userns_restriction.sh
           EOF
@@ -116,8 +120,13 @@ jobs:
       - name: Validate extracted layout
         shell: bash
         run: |
-          if [[ ! -f "${IMAGE_ARCHIVE}" ]]; then
+          if [[ ! -f "${DEVCONTAINER_ARCHIVE}" ]]; then
             echo "::error::Expected container archive path not found in extracted payload."
+            exit 1
+          fi
+
+          if [[ ! -f "${BUILDCONTAINER_ARCHIVE}" ]]; then
+            echo "::error::Expected build container archive path not found in extracted payload."
             exit 1
           fi
 
@@ -131,7 +140,8 @@ jobs:
       - name: Load container image
         shell: bash
         run: |
-          docker load -i "${IMAGE_ARCHIVE}"
+          docker load -i "${DEVCONTAINER_ARCHIVE}"
+          docker load -i "${BUILDCONTAINER_ARCHIVE}"
 
       - name: "Fix BitBake execution issue on Ubuntu 23.10+"
         shell: bash
@@ -277,6 +287,74 @@ jobs:
           fi
 
           git push origin "HEAD:${INTEGRATION_BRANCH}"
+
+      - name: Create or update integration pull request
+        id: integration-pr
+        working-directory: integration-repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          existing_pr="$(gh pr list --head "${INTEGRATION_BRANCH}" --base main --state open --json number --jq '.[0].number // empty')"
+
+          if [[ -n "${existing_pr}" ]]; then
+            echo "Pull request #${existing_pr} already exists for ${INTEGRATION_BRANCH} → main."
+            echo "pr_number=${existing_pr}" >> "${GITHUB_OUTPUT}"
+          else
+            pr_url="$(gh pr create \
+              --head "${INTEGRATION_BRANCH}" \
+              --base main \
+              --title "Integrate upstream version ${RELEASE_VERSION}" \
+              --body "Automated PR created by the upstream integration workflow for release ${RELEASE_VERSION}.")"
+            pr_number="$(echo "${pr_url}" | grep -oE '[0-9]+$')"
+            echo "Created pull request #${pr_number}."
+            echo "pr_tag=pr-${pr_number}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Rewrite devcontainer image tag for PR
+        id: rewrite-tag
+        working-directory: integration-repo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          devcontainer_json=".devcontainer/devcontainer.json"
+          run_sh="./scripts/run.sh"
+          rfi_tag="$(grep -oP '(?<="image":\s*".+:)[^"]+' "${devcontainer_json}")"
+
+          if [[ -z "${rfi_tag}" ]]; then
+            echo "::error::Could not extract image tag from ${devcontainer_json}."
+            exit 1
+          fi
+
+          echo "Original tag: ${rfi_tag}"
+          echo "rfi_tag=${rfi_tag}" >> "${GITHUB_OUTPUT}"
+
+          new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
+          sed -i "s|:\${rfi_tag}\"|:${new_tag}\"|" "${devcontainer_json}"
+          sed -i "s|:\${rfi_tag}\"|:${new_tag}\"|" "${run_sh}"
+          echo "Rewrote image tag to: ${new_tag}"
+          
+          git add "${devcontainer_json}" "${run_sh}"
+          git commit -am "Rewrite devcontainer image tag for PR"
+          git push origin "HEAD:${INTEGRATION_BRANCH}"
+
+      - name: Update container tags and push to registry
+        working-directory: integration-repo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
+          docker tag "${DEVCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${DEVCONTAINER_IMAGE}:${new_tag}"
+          docker tag "${BUILDCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${BUILDCONTAINER_IMAGE}:${new_tag}"
+
+          echo "Pushing updated container images to registry..."
+          docker push "${DEVCONTAINER_IMAGE}:${new_tag}"
+          docker push "${BUILDCONTAINER_IMAGE}:${new_tag}"
 
       - name: Package assets
         shell: bash
