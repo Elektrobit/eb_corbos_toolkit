@@ -17,8 +17,9 @@ on:
         type: string
 
 permissions:
-  contents: write   # create the tag + Release, upload assets
-  packages: write   # push containers to ghcr.io
+  contents: write        # create the tag + Release, upload assets
+  packages: write        # push containers to ghcr.io
+  pull-requests: write   # create integration PR
 
 jobs:
   build-from-archive:
