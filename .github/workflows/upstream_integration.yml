@@ -324,7 +324,7 @@ jobs:
 
           devcontainer_json=".devcontainer/devcontainer.json"
           run_sh="./scripts/run.sh"
-          rfi_tag="$(grep -oP '(?<="image":\s*".+:)[^"]+' "${devcontainer_json}")"
+          rfi_tag="$(sed -n 's/.*"image":.*:\([^"]*\)".*/\1/p' "${devcontainer_json}" | head -1)"
 
           if [[ -z "${rfi_tag}" ]]; then
             echo "::error::Could not extract image tag from ${devcontainer_json}."
