@@ -106,6 +106,7 @@ jobs:
           WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
           IMAGE_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
           RUN_SCRIPT=${extract_root}/eb_corbos_toolkit/workspace/scripts/run.sh
+          BITBAKE_EXECUTION_FIXER=${extract_root}/eb_corbos_toolkit/workspace/.devcontainer/scripts/check_userns_restriction.sh
           EOF
 
       - name: Validate extracted layout
@@ -131,14 +132,7 @@ jobs:
       - name: "Fix BitBake execution issue on Ubuntu 23.10+"
         shell: bash
         run: |
-          sudo tee /etc/apparmor.d/bitbake > /dev/null <<EOF
-          abi <abi/4.0>,
-          include <tunables/global>
-          profile bitbake /**/bitbake/bin/bitbake flags=(unconfined) {
-          userns,
-          }
-          EOF
-          sudo apparmor_parser -r /etc/apparmor.d/bitbake
+          "${{ env.BITBAKE_EXECUTION_FIXER }}" --yes
 
       - name: Run kas build from extracted run.sh
         shell: bash
