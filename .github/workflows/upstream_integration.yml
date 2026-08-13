@@ -300,10 +300,11 @@ jobs:
           set -euo pipefail
 
           existing_pr="$(gh pr list --head "${INTEGRATION_BRANCH}" --base main --state open --json number --jq '.[0].number // empty')"
+          tag_prefix="pr-"
 
           if [[ -n "${existing_pr}" ]]; then
             echo "Pull request #${existing_pr} already exists for ${INTEGRATION_BRANCH} → main."
-            echo "pr_number=${existing_pr}" >> "${GITHUB_OUTPUT}"
+            echo "pr_tag=${tag_prefix}${existing_pr}" >> "${GITHUB_OUTPUT}"
           else
             pr_url="$(gh pr create \
               --head "${INTEGRATION_BRANCH}" \
@@ -312,7 +313,7 @@ jobs:
               --body "Automated PR created by the upstream integration workflow for release ${RELEASE_VERSION}.")"
             pr_number="$(echo "${pr_url}" | grep -oE '[0-9]+$')"
             echo "Created pull request #${pr_number}."
-            echo "pr_tag=pr-${pr_number}" >> "${GITHUB_OUTPUT}"
+            echo "pr_tag=${tag_prefix}${pr_number}" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Rewrite devcontainer image tag for PR
