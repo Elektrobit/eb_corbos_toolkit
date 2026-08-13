@@ -336,8 +336,8 @@ jobs:
           echo "rfi_tag=${rfi_tag}" >> "${GITHUB_OUTPUT}"
 
           new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
-          sed -i "s|:\${rfi_tag}\"|:${new_tag}\"|" "${devcontainer_json}"
-          sed -i "s|:\${rfi_tag}\"|:${new_tag}\"|" "${run_sh}"
+          sed -i "s|:${rfi_tag}\"|:${new_tag}\"|" "${devcontainer_json}"
+          sed -i "s|:${rfi_tag}\"|:${new_tag}\"|" "${run_sh}"
           echo "Rewrote image tag to: ${new_tag}"
           
           git add "${devcontainer_json}" "${run_sh}"
