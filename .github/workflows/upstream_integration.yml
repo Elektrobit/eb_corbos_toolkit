@@ -278,7 +278,7 @@ jobs:
 
           git push origin "HEAD:${INTEGRATION_BRANCH}"
 
-      - name: Package user manual assets
+      - name: Package assets
         shell: bash
         run: |
           set -euo pipefail
@@ -287,6 +287,7 @@ jobs:
 
           pdf_src="${EXTRACT_ROOT}/doc/user_manual.pdf"
           html_src="${EXTRACT_ROOT}/doc/html"
+          prebuilt_src="${EXTRACT_ROOT}/prebuilt"
 
           if [[ ! -f "${pdf_src}" ]]; then
             echo "::error::Expected user manual PDF not found at ${pdf_src}."
@@ -298,11 +299,17 @@ jobs:
             exit 1
           fi
 
+          if [[ ! -d "${prebuilt_src}" ]]; then
+            echo "::error::Expected prebuilt directory not found at ${prebuilt_src}."
+            exit 1
+          fi
+
           assets_dir="${TMP_WORK_DIR}/release-assets"
           mkdir -p "${assets_dir}"
 
           cp "${pdf_src}" "${assets_dir}/user_manual.pdf"
           ( cd "${html_src}" && zip -r "${assets_dir}/user_manual_html.zip" . )
+          ( cd "${prebuilt_src}" && zip -r "${assets_dir}/prebuilt.zip" . )
 
           echo "RELEASE_ASSETS_DIR=${assets_dir}" >> "${GITHUB_ENV}"
 
@@ -316,6 +323,7 @@ jobs:
 
           pdf_asset="${RELEASE_ASSETS_DIR}/user_manual.pdf"
           html_asset="${RELEASE_ASSETS_DIR}/user_manual_html.zip"
+          prebuilt_asset="${RELEASE_ASSETS_DIR}/prebuilt.zip"
 
           if gh release view "${RELEASE_VERSION}" >/dev/null 2>&1; then
             is_draft="$(gh release view "${RELEASE_VERSION}" --json isDraft --jq '.isDraft')"
@@ -324,7 +332,7 @@ jobs:
               exit 1
             fi
             echo "Draft release '${RELEASE_VERSION}' already exists; updating assets."
-            gh release upload "${RELEASE_VERSION}" "${pdf_asset}" "${html_asset}" --clobber
+            gh release upload "${RELEASE_VERSION}" "${pdf_asset}" "${html_asset}" "${prebuilt_asset}" --clobber
           else
             echo "Creating draft release '${RELEASE_VERSION}'."
             # A draft release with a not-yet-existing tag does not create the tag
@@ -332,5 +340,5 @@ jobs:
             gh release create "${RELEASE_VERSION}" \
               --draft \
               --title "${RELEASE_VERSION}" \
-              "${pdf_asset}" "${html_asset}"
+              "${pdf_asset}" "${html_asset}" "${prebuilt_asset}"
           fi
