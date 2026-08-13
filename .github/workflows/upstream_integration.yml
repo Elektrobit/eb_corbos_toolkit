@@ -110,7 +110,7 @@ jobs:
           WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
           IMAGE_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
           RUN_SCRIPT=${extract_root}/eb_corbos_toolkit/workspace/scripts/run.sh
-          BITBAKE_EXECUTION_FIXER=${extract_root}/eb_corbos_toolkit/workspace/.devcontainer/check_userns_restriction.sh
+          BITBAKE_EXECUTION_FIXER=${extract_root}/eb_corbos_toolkit/workspace/.devcontainer/scripts/check_userns_restriction.sh
           EOF
 
       - name: Validate extracted layout
