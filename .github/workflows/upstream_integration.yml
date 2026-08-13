@@ -314,6 +314,7 @@ jobs:
           echo "RELEASE_ASSETS_DIR=${assets_dir}" >> "${GITHUB_ENV}"
 
       - name: Create or update draft release
+        working-directory: integration-repo
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ inputs.release_version }}
