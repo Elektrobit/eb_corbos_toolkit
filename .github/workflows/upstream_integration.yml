@@ -112,7 +112,7 @@ jobs:
           WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
           DEVCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
           BUILDCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/buildcontainer-trixie-ebclfsa-amd64.docker-archive.zst
-          DEVCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd6
+          DEVCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64
           BUILDCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64
           RUN_SCRIPT=${extract_root}/eb_corbos_toolkit/workspace/scripts/run.sh
           BITBAKE_EXECUTION_FIXER=${extract_root}/eb_corbos_toolkit/workspace/.devcontainer/scripts/check_userns_restriction.sh
@@ -352,11 +352,11 @@ jobs:
 
           new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
           docker tag "${DEVCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${DEVCONTAINER_IMAGE}:${new_tag}"
-          docker tag "${BUILDCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${BUILDCONTAINER_IMAGE}:${new_tag}"
+          # docker tag "${BUILDCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${BUILDCONTAINER_IMAGE}:${new_tag}"
 
           echo "Pushing updated container images to registry..."
           docker push "${DEVCONTAINER_IMAGE}:${new_tag}"
-          docker push "${BUILDCONTAINER_IMAGE}:${new_tag}"
+          # docker push "${BUILDCONTAINER_IMAGE}:${new_tag}"
 
       - name: Package assets
         shell: bash
