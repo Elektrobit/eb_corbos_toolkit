@@ -354,6 +354,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
           new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
           docker tag "${DEVCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${DEVCONTAINER_IMAGE}:${new_tag}"
           # docker tag "${BUILDCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${BUILDCONTAINER_IMAGE}:${new_tag}"
