@@ -196,6 +196,7 @@ jobs:
         shell: bash
         run: |
           rm -rf "${{ env.WORKSPACE_ROOT }}/prebuilt"
+          rm -rf "${{ env.WORKSPACE_ROOT }}/build"
 
       - name: Checkout repository for integration
         uses: actions/checkout@v4
