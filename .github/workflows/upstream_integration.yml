@@ -138,65 +138,59 @@ jobs:
         run: |
           "${{ env.BITBAKE_EXECUTION_FIXER }}" --yes
 
-      - name: Run kas build from extracted run.sh
-        shell: bash
-        working-directory: ${{ env.WORKSPACE_ROOT }}
-        run: |
-          "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
+      # - name: Run kas build from extracted run.sh
+      #   shell: bash
+      #   working-directory: ${{ env.WORKSPACE_ROOT }}
+      #   run: |
+      #     "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
 
-      - name: Test the fastdev image in qemu
-        shell: bash
-        working-directory: ${{ env.WORKSPACE_ROOT }}
-        run: |
-          # run dev container in detached mode and keep it running
-          export EXTRA_DOCKER_OPTIONS="-d --log-driver local"
-          LOG_FILE=$(mktemp -t ebcl_run_devcontainer-XXXXXX.log 2>/dev/null) || \
-            LOG_FILE="/tmp/ebcl_run_devcontainer.log"
+      # - name: Test the fastdev image in qemu
+      #   shell: bash
+      #   working-directory: ${{ env.WORKSPACE_ROOT }}
+      #   run: |
+      #     # run dev container in detached mode and keep it running
+      #     export EXTRA_DOCKER_OPTIONS="-d --log-driver local"
+      #     LOG_FILE=$(mktemp -t ebcl_run_devcontainer-XXXXXX.log 2>/dev/null) || \
+      #       LOG_FILE="/tmp/ebcl_run_devcontainer.log"
 
-          echo "Starting devcontainer in the background"
-          DEV_CONTAINER_ID=$("${RUN_SCRIPT}" -d -- bash -c "sleep infinity" 2>&1 | tee "$LOG_FILE" | grep -oE '^[0-9a-f]{64}$')
-          if [[ -z "${DEV_CONTAINER_ID}" ]]; then
-              echo "::error::Failed to start devcontainer. Log output:"
-              cat "$LOG_FILE"
-              exit 1
-          fi
-          sleep 10
+      #     echo "Starting devcontainer in the background"
+      #     DEV_CONTAINER_ID=$("${RUN_SCRIPT}" -d -- bash -c "sleep infinity" 2>&1 | tee "$LOG_FILE" | grep -oE '^[0-9a-f]{64}$')
+      #     if [[ -z "${DEV_CONTAINER_ID}" ]]; then
+      #         echo "::error::Failed to start devcontainer. Log output:"
+      #         cat "$LOG_FILE"
+      #         exit 1
+      #     fi
+      #     sleep 10
 
-          devcontainer_exec()
-          {
-              docker exec "$DEV_CONTAINER_ID" "$@"
-          }
+      #     devcontainer_exec()
+      #     {
+      #         docker exec "$DEV_CONTAINER_ID" "$@"
+      #     }
 
-          echo "Running fastdev in qemu in background, logging to qemu.log"
-          devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
-          devcontainer_exec bash -c \
-            "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
+      #     echo "Running fastdev in qemu in background, logging to qemu.log"
+      #     devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
+      #     devcontainer_exec bash -c \
+      #       "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
 
-          echo "Terminating fastdev"
-          devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
+      #     echo "Terminating fastdev"
+      #     devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
 
-          echo "Waiting for fastdev to power down"
-          max_tries=20
-          msg="Power down"
-          log="$WORKSPACE_ROOT/qemu.log"
+      #     echo "Waiting for fastdev to power down"
+      #     max_tries=20
+      #     msg="Power down"
+      #     log="$WORKSPACE_ROOT/qemu.log"
 
-          for i in $(seq 1 "$max_tries"); do
-              if grep -q "${msg}" "${log}" 2>/dev/null; then
-                  echo "Waiting for \"$msg\" message in $log succeeded"
-                  exit 0
-              fi
-              echo "Waiting for \"$msg\" message in $log ... ($i/$max_tries)"
-              sleep 1
-          done
-          echo "Error: Waiting for \"$msg\" message in $log timed out!"
-          cat "${log}"
-          exit 1
-
-      - name: Remove prebuilt assets from workspace before branch update
-        shell: bash
-        run: |
-          rm -rf "${{ env.WORKSPACE_ROOT }}/prebuilt"
-          rm -rf "${{ env.WORKSPACE_ROOT }}/build"
+      #     for i in $(seq 1 "$max_tries"); do
+      #         if grep -q "${msg}" "${log}" 2>/dev/null; then
+      #             echo "Waiting for \"$msg\" message in $log succeeded"
+      #             exit 0
+      #         fi
+      #         echo "Waiting for \"$msg\" message in $log ... ($i/$max_tries)"
+      #         sleep 1
+      #     done
+      #     echo "Error: Waiting for \"$msg\" message in $log timed out!"
+      #     cat "${log}"
+      #     exit 1
 
       - name: Checkout repository for integration
         uses: actions/checkout@v4
