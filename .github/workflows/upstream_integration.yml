@@ -11,9 +11,13 @@ on:
         description: "Authentication bearer token"
         required: true
         type: string
+      release_version:
+        description: "Release version string (e.g. v2.0.0-beta2)"
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  contents: write   # create the tag + Release, upload assets
 
 jobs:
   build-from-archive:
@@ -188,16 +192,126 @@ jobs:
           cat "${log}"
           exit 1
 
-
-      - name: Cleanup temporary files
-        #  not really needed as the runner is ephemeral
-        if: false
+      - name: Remove prebuilt assets from workspace before branch update
         shell: bash
         run: |
-          if [[ -n "${TMP_WORK_DIR:-}" && -d "${TMP_WORK_DIR}" ]]; then
-            sudo rm -rf "${TMP_WORK_DIR}"
+          rm -rf "${{ env.WORKSPACE_ROOT }}/prebuilt"
+
+      - name: Checkout repository for integration
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          path: integration-repo
+
+      - name: Create or checkout integration branch
+        working-directory: integration-repo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="integration"
+          echo "INTEGRATION_BRANCH=${BRANCH}" >> "${GITHUB_ENV}"
+
+          if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
+            echo "Integration branch '${BRANCH}' already exists; checking out its state."
+            git fetch origin "${BRANCH}"
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          else
+            echo "Integration branch '${BRANCH}' does not exist; creating it from main."
+            git checkout -B "${BRANCH}" origin/main
           fi
 
-      # Future extension point:
-      # - Create/update branch with generated content
-      # - Open pull request against this repository
+      - name: Replace working copy with upstream workspace
+        working-directory: integration-repo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! -d "${WORKSPACE_ROOT}" ]]; then
+            echo "::error::WORKSPACE_ROOT '${WORKSPACE_ROOT}' does not exist."
+            exit 1
+          fi
+
+          # Remove all tracked and untracked content except the .git folder.
+          find . -mindepth 1 -maxdepth 1 -name '.git' -prune -o -exec rm -rf {} +
+
+          # Copy the upstream workspace on top, preserving flags, mtimes, ownership.
+          cp -a "${WORKSPACE_ROOT}/." .
+
+      - name: Commit integrated upstream content
+        working-directory: integration-repo
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit; working copy already matches upstream."
+          else
+            git commit -m "Integrate upstream version ${RELEASE_VERSION}"
+          fi
+
+          git push origin "HEAD:${INTEGRATION_BRANCH}"
+
+      - name: Package user manual assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          command -v zip >/dev/null || { echo "::error::zip is required but not installed."; exit 1; }
+
+          pdf_src="${EXTRACT_ROOT}/doc/user_manual.pdf"
+          html_src="${EXTRACT_ROOT}/doc/html"
+
+          if [[ ! -f "${pdf_src}" ]]; then
+            echo "::error::Expected user manual PDF not found at ${pdf_src}."
+            exit 1
+          fi
+
+          if [[ ! -d "${html_src}" ]]; then
+            echo "::error::Expected HTML user manual directory not found at ${html_src}."
+            exit 1
+          fi
+
+          assets_dir="${TMP_WORK_DIR}/release-assets"
+          mkdir -p "${assets_dir}"
+
+          cp "${pdf_src}" "${assets_dir}/user_manual.pdf"
+          ( cd "${html_src}" && zip -r "${assets_dir}/user_manual_html.zip" . )
+
+          echo "RELEASE_ASSETS_DIR=${assets_dir}" >> "${GITHUB_ENV}"
+
+      - name: Create or update draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          pdf_asset="${RELEASE_ASSETS_DIR}/user_manual.pdf"
+          html_asset="${RELEASE_ASSETS_DIR}/user_manual_html.zip"
+
+          if gh release view "${RELEASE_VERSION}" >/dev/null 2>&1; then
+            is_draft="$(gh release view "${RELEASE_VERSION}" --json isDraft --jq '.isDraft')"
+            if [[ "${is_draft}" != "true" ]]; then
+              echo "::error::Release '${RELEASE_VERSION}' already exists and is published (not a draft); refusing to modify it."
+              exit 1
+            fi
+            echo "Draft release '${RELEASE_VERSION}' already exists; updating assets."
+            gh release upload "${RELEASE_VERSION}" "${pdf_asset}" "${html_asset}" --clobber
+          else
+            echo "Creating draft release '${RELEASE_VERSION}'."
+            # A draft release with a not-yet-existing tag does not create the tag
+            # or point at any commit/branch until it is published.
+            gh release create "${RELEASE_VERSION}" \
+              --draft \
+              --title "${RELEASE_VERSION}" \
+              "${pdf_asset}" "${html_asset}"
+          fi
