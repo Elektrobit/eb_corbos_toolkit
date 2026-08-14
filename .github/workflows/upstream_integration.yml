@@ -56,7 +56,7 @@ jobs:
           command -v docker >/dev/null
           command -v jq >/dev/null
 
-      - name: Download and unpack archive
+      - name: Download and unpack upstream delivery archive
         shell: bash
         run: |
           set -euo pipefail
@@ -106,6 +106,7 @@ jobs:
 
           echo "Extraction complete."
 
+          # prepare environment variables for subsequent steps
           cat >> "${GITHUB_ENV}" << EOF
           TMP_WORK_DIR=${tmp_dir}
           EXTRACT_ROOT=${extract_root}
@@ -122,24 +123,14 @@ jobs:
       - name: Validate extracted layout
         shell: bash
         run: |
-          if [[ ! -f "${DEVCONTAINER_ARCHIVE}" ]]; then
-            echo "::error::Expected container archive path not found in extracted payload."
-            exit 1
-          fi
+          for f in "${DEVCONTAINER_ARCHIVE}" "${BUILDCONTAINER_ARCHIVE}" "${RUN_SCRIPT}" "${BITBAKE_EXECUTION_FIXER}"; do
+            if [[ ! -f "${f}" ]]; then
+              echo "::error::Expected file not found in extracted payload: ${f}"
+              exit 1
+            fi
+          done
 
-          if [[ ! -f "${BUILDCONTAINER_ARCHIVE}" ]]; then
-            echo "::error::Expected build container archive path not found in extracted payload."
-            exit 1
-          fi
-
-          if [[ ! -f "${RUN_SCRIPT}" ]]; then
-            echo "::error::Expected eb_corbos_toolkit/workspace/scripts/run.sh not found in extracted payload."
-            exit 1
-          fi
-
-          chmod +x "${RUN_SCRIPT}"
-
-      - name: Load container image
+      - name: Load container image archives into Docker
         shell: bash
         run: |
           docker load -i "${DEVCONTAINER_ARCHIVE}"
@@ -148,61 +139,62 @@ jobs:
       - name: "Fix BitBake execution issue on Ubuntu 23.10+"
         shell: bash
         run: |
-          "${{ env.BITBAKE_EXECUTION_FIXER }}" --yes
+          "${BITBAKE_EXECUTION_FIXER}" --yes
 
-      # - name: Run kas build from extracted run.sh
-      #   shell: bash
-      #   working-directory: ${{ env.WORKSPACE_ROOT }}
-      #   run: |
-      #     "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
+      - name: "Test: Run kas build using extracted run.sh"
+        shell: bash
+        run: |
+          cd "${WORKSPACE_ROOT}"
+          "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
 
-      # - name: Test the fastdev image in qemu
-      #   shell: bash
-      #   working-directory: ${{ env.WORKSPACE_ROOT }}
-      #   run: |
-      #     # run dev container in detached mode and keep it running
-      #     export EXTRA_DOCKER_OPTIONS="-d --log-driver local"
-      #     LOG_FILE=$(mktemp -t ebcl_run_devcontainer-XXXXXX.log 2>/dev/null) || \
-      #       LOG_FILE="/tmp/ebcl_run_devcontainer.log"
+      - name: "Test: Boot fastdev image in QEMU"
+        shell: bash
+        run: |
+          cd "${WORKSPACE_ROOT}"
+          # run dev container in detached mode and keep it running
+          export EXTRA_DOCKER_OPTIONS="-d --log-driver local"
+          LOG_FILE=$(mktemp -t ebcl_run_devcontainer-XXXXXX.log 2>/dev/null) || \
+            LOG_FILE="/tmp/ebcl_run_devcontainer.log"
 
-      #     echo "Starting devcontainer in the background"
-      #     DEV_CONTAINER_ID=$("${RUN_SCRIPT}" -d -- bash -c "sleep infinity" 2>&1 | tee "$LOG_FILE" | grep -oE '^[0-9a-f]{64}$')
-      #     if [[ -z "${DEV_CONTAINER_ID}" ]]; then
-      #         echo "::error::Failed to start devcontainer. Log output:"
-      #         cat "$LOG_FILE"
-      #         exit 1
-      #     fi
-      #     sleep 10
+          echo "Starting devcontainer in the background"
+          DEV_CONTAINER_ID=$("${RUN_SCRIPT}" -d -- bash -c "sleep infinity" 2>&1 | tee "$LOG_FILE" | grep -oE '^[0-9a-f]{64}$')
+          if [[ -z "${DEV_CONTAINER_ID}" ]]; then
+              echo "::error::Failed to start devcontainer. Log output:"
+              cat "$LOG_FILE"
+              exit 1
+          fi
+          sleep 10
 
-      #     devcontainer_exec()
-      #     {
-      #         docker exec "$DEV_CONTAINER_ID" "$@"
-      #     }
+          devcontainer_exec()
+          {
+              docker exec "$DEV_CONTAINER_ID" "$@"
+          }
 
-      #     echo "Running fastdev in qemu in background, logging to qemu.log"
-      #     devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
-      #     devcontainer_exec bash -c \
-      #       "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
+          echo "Running fastdev in qemu in background, logging to qemu.log"
+          devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
+          devcontainer_exec bash -c \
+            "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
 
-      #     echo "Terminating fastdev"
-      #     devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
+          echo "Terminating fastdev"
+          devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
 
-      #     echo "Waiting for fastdev to power down"
-      #     max_tries=20
-      #     msg="Power down"
-      #     log="$WORKSPACE_ROOT/qemu.log"
+          echo "Waiting for fastdev to power down"
+          max_tries=20
+          msg="Power down"
+          log="$WORKSPACE_ROOT/qemu.log"
 
-      #     for i in $(seq 1 "$max_tries"); do
-      #         if grep -q "${msg}" "${log}" 2>/dev/null; then
-      #             echo "Waiting for \"$msg\" message in $log succeeded"
-      #             exit 0
-      #         fi
-      #         echo "Waiting for \"$msg\" message in $log ... ($i/$max_tries)"
-      #         sleep 1
-      #     done
-      #     echo "Error: Waiting for \"$msg\" message in $log timed out!"
-      #     cat "${log}"
-      #     exit 1
+          for i in $(seq 1 "$max_tries"); do
+              if grep -q "${msg}" "${log}" 2>/dev/null; then
+                  echo "Waiting for \"$msg\" message in $log succeeded"
+                  rm -f "${log}"
+                  exit 0
+              fi
+              echo "Waiting for \"$msg\" message in $log ... ($i/$max_tries)"
+              sleep 1
+          done
+          echo "Error: Waiting for \"$msg\" message in $log timed out!"
+          cat "${log}"
+          exit 1
 
       - name: Checkout repository for integration
         uses: actions/checkout@v4
@@ -220,7 +212,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="integration"
+          BRANCH="upstream-integration"
           echo "INTEGRATION_BRANCH=${BRANCH}" >> "${GITHUB_ENV}"
 
           if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
@@ -232,7 +224,7 @@ jobs:
             git checkout -B "${BRANCH}" origin/main
           fi
 
-      - name: Replace working copy with upstream workspace
+      - name: Integrate upstream workspace
         working-directory: integration-repo
         shell: bash
         run: |
@@ -273,7 +265,7 @@ jobs:
           # Ignore the "prebuilt" and "build" sub-folders.
           rsync -a --exclude='prebuilt' --exclude='build' "${WORKSPACE_ROOT}/." .
 
-      - name: Commit integrated upstream content
+      - name: Commit integrated upstream workspace and push to integration branch
         working-directory: integration-repo
         env:
           RELEASE_VERSION: ${{ inputs.release_version }}
@@ -345,8 +337,9 @@ jobs:
           if git diff --cached --quiet; then
             echo "Tags already match; nothing to commit."
           else
-            git commit -m "Rewrite devcontainer image tag for PR"
-            git push origin "HEAD:${INTEGRATION_BRANCH}"
+            # Amend the previous commit to include the tag rewrite, so that the previous container tag is not left in the integration branch history.
+            git commit --amend --no-edit
+            git push --force origin "HEAD:${INTEGRATION_BRANCH}"
           fi
 
       - name: Update container tags and push to registry
