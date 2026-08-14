@@ -1,4 +1,4 @@
-name: Update Toolkit from Internal Release Archive
+name: Update Toolkit from Upstream Release Archive
 
 on:
   workflow_dispatch:
@@ -23,6 +23,7 @@ permissions:
 
 jobs:
   build-from-archive:
+    name: Integrate Upstream Release Archive
     runs-on: ubuntu-latest
 
     steps:
