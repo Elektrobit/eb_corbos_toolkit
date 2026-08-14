@@ -1,0 +1,6 @@
+NAME = ebclfsa-openssh-server-host-keys
+
+COMMAND = /usr/sbin/ebclfsa-openssh-server-host-keys.sh
+
+DEPENDS =
+PROVIDES = opensshhostkeys:wait
