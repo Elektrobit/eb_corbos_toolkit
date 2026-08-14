@@ -395,7 +395,36 @@ jobs:
 
           cp "${pdf_src}" "${assets_dir}/user_manual.pdf"
           ( cd "${html_src}" && zip -r "${assets_dir}/user_manual_html.zip" . )
-          ( cd "${prebuilt_src}" && zip -r "${assets_dir}/prebuilt.zip" . )
+
+          # Full prebuilt tree as a single archive.
+          tar -czf "${assets_dir}/prebuilt.tgz" -C "${prebuilt_src}" .
+
+          # Per-target assets: one image archive (named after its .wic file), the
+          # SDK sysroot tarball and the SSH target key for every target directory.
+          for target_dir in "${prebuilt_src}"/*/; do
+            [[ -d "${target_dir}" ]] || continue
+
+            image_dir="${target_dir}image"
+            if [[ -d "${image_dir}" ]]; then
+              wic_file="$(find "${image_dir}" -maxdepth 1 -name '*.wic' -print -quit)"
+              if [[ -z "${wic_file}" ]]; then
+                echo "::error::No .wic file found in ${image_dir}."
+                exit 1
+              fi
+              image_base="$(basename "${wic_file}" .wic)"
+              tar -czf "${assets_dir}/${image_base}.tgz" -C "${image_dir}" .
+            fi
+
+            sdk_dir="${target_dir}sysroot"
+            if [[ -d "${sdk_dir}" ]]; then
+              find "${sdk_dir}" -maxdepth 1 -type f -exec cp {} "${assets_dir}/" \;
+            fi
+
+            key_dir="${target_dir}ssh_keys"
+            if [[ -d "${key_dir}" ]]; then
+              find "${key_dir}" -maxdepth 1 -type f -exec cp {} "${assets_dir}/" \;
+            fi
+          done
 
           echo "RELEASE_ASSETS_DIR=${assets_dir}" >> "${GITHUB_ENV}"
 
@@ -408,9 +437,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          pdf_asset="${RELEASE_ASSETS_DIR}/user_manual.pdf"
-          html_asset="${RELEASE_ASSETS_DIR}/user_manual_html.zip"
-          prebuilt_asset="${RELEASE_ASSETS_DIR}/prebuilt.zip"
+          shopt -s nullglob
+          assets=( "${RELEASE_ASSETS_DIR}"/* )
+          shopt -u nullglob
+
+          if [[ ${#assets[@]} -eq 0 ]]; then
+            echo "::error::No release assets found in ${RELEASE_ASSETS_DIR}."
+            exit 1
+          fi
 
           if gh release view "${RELEASE_VERSION}" >/dev/null 2>&1; then
             is_draft="$(gh release view "${RELEASE_VERSION}" --json isDraft --jq '.isDraft')"
@@ -419,7 +453,7 @@ jobs:
               exit 1
             fi
             echo "Draft release '${RELEASE_VERSION}' already exists; updating assets."
-            gh release upload "${RELEASE_VERSION}" "${pdf_asset}" "${html_asset}" "${prebuilt_asset}" --clobber
+            gh release upload "${RELEASE_VERSION}" "${assets[@]}" --clobber
           else
             echo "Creating draft release '${RELEASE_VERSION}'."
             # A draft release with a not-yet-existing tag does not create the tag
@@ -427,5 +461,5 @@ jobs:
             gh release create "${RELEASE_VERSION}" \
               --draft \
               --title "${RELEASE_VERSION}" \
-              "${pdf_asset}" "${html_asset}" "${prebuilt_asset}"
+              "${assets[@]}"
           fi
