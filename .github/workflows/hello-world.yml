@@ -2,6 +2,7 @@ name: Hello World Echo
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   echo:
