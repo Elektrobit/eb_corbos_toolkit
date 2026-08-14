@@ -392,10 +392,10 @@ jobs:
           mkdir -p "${assets_dir}"
 
           cp "${pdf_src}" "${assets_dir}/user_manual.pdf"
-          tar -czf "${assets_dir}/user_manual_html.tgz" -C "${html_src}" .
+          tar -czf "${assets_dir}/user_manual_html.tar.gz" -C "${html_src}" .
 
           # Full prebuilt tree as a single archive.
-          tar -czf "${assets_dir}/prebuilt.tgz" -C "${prebuilt_src}" .
+          tar -czf "${assets_dir}/prebuilt.tar.gz" -C "${prebuilt_src}" .
 
           # Per-target assets: one image archive (named after its .wic file), the
           # SDK sysroot tarball and the SSH target key for every target directory.
@@ -410,7 +410,7 @@ jobs:
                 exit 1
               fi
               image_base="$(basename "${wic_file}" .wic)"
-              tar -czf "${assets_dir}/${image_base}.tgz" -C "${image_dir}" .
+              tar -czf "${assets_dir}/${image_base}.tar.gz" -C "${image_dir}" .
             fi
 
             sdk_dir="${target_dir}sysroot"
