@@ -1,0 +1,291 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+name: Update Toolkit from Upstream Release Archive
+
+# Integrates an upstream EB corbos Toolkit release archive into this repository.
+# The workflow downloads and unpacks the delivery archive, loads and smoke-tests
+# the container images (kas build + QEMU boot of the fastdev image), opens or
+# updates an integration pull request, retags and pushes the container images to
+# ghcr.io, and creates/updates a draft GitHub release with the collected assets.
+#
+# Access control: this workflow is manually triggered (workflow_dispatch) and may
+# only be run by a small set of trusted actors. The first job step aborts unless
+# the triggering actor is listed in the WORKFLOW_ALLOWED_ACTORS repository
+# variable (a comma-separated list of GitHub usernames). It also requires a
+# privileged token input, so it must not be exposed to untrusted contributors.
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_url:
+        description: "URL for the toolkit tar.gz archive"
+        required: true
+        type: string
+      artifactory_token:
+        description: "Authentication bearer token"
+        required: true
+        type: string
+      release_version:
+        description: "Release version string (e.g. v2.0.0-beta2)"
+        required: true
+        type: string
+
+permissions:
+  contents: write        # create the tag + Release, upload assets
+  packages: write        # push containers to ghcr.io
+  pull-requests: write   # create integration PR
+
+# Serialize runs so overlapping executions cannot force-push over each other's
+# integration branch. Do not cancel an in-progress run mid-integration.
+concurrency:
+  group: upstream-integration
+  cancel-in-progress: false
+
+jobs:
+  build-from-archive:
+    name: Integrate Upstream Release Archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SCRIPTS_DIR: ${{ github.workspace }}/.github/scripts
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
+
+    steps:
+      - name: Authorize triggering actor
+        env:
+          ALLOWED_ACTORS: ${{ vars.WORKFLOW_ALLOWED_ACTORS }}
+        run: |
+          if [[ -z "${ALLOWED_ACTORS:-}" ]]; then
+            echo "::error::Repository variable WORKFLOW_ALLOWED_ACTORS is not set."
+            echo "::error::Set it to a comma-separated list of GitHub usernames allowed to run this workflow."
+            exit 1
+          fi
+
+          normalized="${ALLOWED_ACTORS// /}"
+          if [[ ",${normalized}," != *",${GITHUB_ACTOR},"* ]]; then
+            echo "::error::Actor is not authorized to run this workflow."
+            exit 1
+          fi
+
+          echo "Actor authorization succeeded."
+
+      - name: Verify runner prerequisites
+        run: |
+          command -v curl >/dev/null
+          command -v tar >/dev/null
+          command -v docker >/dev/null
+          command -v jq >/dev/null
+
+      - name: Checkout workflow scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/scripts
+
+      - name: Download, unpack, and validate upstream delivery archive
+        run: |
+          echo "::add-mask::${{ inputs.artifact_url }}"
+          echo "::add-mask::${{ inputs.artifactory_token }}"
+          "${SCRIPTS_DIR}/download_archive.sh" \
+            --url "${{ inputs.artifact_url }}" \
+            --token "${{ inputs.artifactory_token }}" \
+            >> "${GITHUB_ENV}"
+
+      - name: Load container image archives into Docker
+        run: |
+          docker load -i "${DEVCONTAINER_ARCHIVE}"
+          docker load -i "${BUILDCONTAINER_ARCHIVE}"
+
+      - name: "Fix BitBake execution issue on Ubuntu 23.10+"
+        run: |
+          "${BITBAKE_EXECUTION_FIXER}" --yes
+
+      - name: "Test: Run kas build using extracted run.sh"
+        run: |
+          cd "${WORKSPACE_ROOT}"
+          "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
+
+      - name: "Test: Boot fastdev image in QEMU"
+        run: |
+          bash "${SCRIPTS_DIR}/qemu_smoke_test.sh" \
+            --workspace-root "${WORKSPACE_ROOT}" \
+            --run-script "${RUN_SCRIPT}" \
+            | grep -E '^DEV_CONTAINER_ID=[0-9a-f]{64}$' >> "${GITHUB_ENV}"
+
+      - name: Checkout repository for integration
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          path: integration-repo
+
+      - name: Create or checkout integration branch
+        working-directory: integration-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="upstream-integration"
+          echo "INTEGRATION_BRANCH=${BRANCH}" >> "${GITHUB_ENV}"
+
+          if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
+            echo "Integration branch '${BRANCH}' already exists; checking out its state."
+            git fetch origin "${BRANCH}"
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          else
+            echo "Integration branch '${BRANCH}' does not exist; creating it from main."
+            git checkout -B "${BRANCH}" origin/main
+          fi
+
+      - name: Integrate upstream workspace
+        working-directory: integration-repo
+        run: |
+          "${SCRIPTS_DIR}/integrate_workspace.sh" \
+            --workspace-root "${WORKSPACE_ROOT}"
+
+      - name: Commit integrated upstream workspace and push to integration branch
+        working-directory: integration-repo
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit; working copy already matches upstream."
+          else
+            git commit -m "Integrate upstream version ${RELEASE_VERSION}"
+            git push origin "HEAD:${INTEGRATION_BRANCH}"
+          fi
+
+      - name: Create or update integration pull request
+        id: integration-pr
+        working-directory: integration-repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          existing_pr="$(gh pr list --head "${INTEGRATION_BRANCH}" --base main --state open --json number --jq '.[0].number // empty')"
+          tag_prefix="v"
+
+          if [[ -n "${existing_pr}" ]]; then
+            echo "Pull request #${existing_pr} already exists for ${INTEGRATION_BRANCH} → main."
+            echo "pr_tag=${tag_prefix}${existing_pr}" >> "${GITHUB_OUTPUT}"
+          else
+            pr_url="$(gh pr create \
+              --head "${INTEGRATION_BRANCH}" \
+              --base main \
+              --title "Integrate upstream version ${RELEASE_VERSION}" \
+              --body "Automated PR created by the upstream integration workflow for release ${RELEASE_VERSION}.")"
+            pr_number="$(echo "${pr_url}" | grep -oE '[0-9]+$')"
+            echo "Created pull request #${pr_number}."
+            echo "pr_tag=${tag_prefix}${pr_number}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Rewrite devcontainer image tag to pull request number
+        id: rewrite-tag
+        working-directory: integration-repo
+        run: |
+          devcontainer_json=".devcontainer/devcontainer.json"
+          run_sh="./scripts/run.sh"
+          rfi_tag="$(sed -n 's/.*"image":.*:\([^"]*\)".*/\1/p' "${devcontainer_json}" | head -1)"
+
+          if [[ -z "${rfi_tag}" ]]; then
+            echo "::error::Could not extract image tag from ${devcontainer_json}."
+            exit 1
+          fi
+
+          echo "Original tag: ${rfi_tag}"
+          echo "rfi_tag=${rfi_tag}" >> "${GITHUB_OUTPUT}"
+
+          new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
+          sed -i "s|:${rfi_tag}\"|:${new_tag}\"|" "${devcontainer_json}"
+          sed -i "s|:${rfi_tag}\"|:${new_tag}\"|" "${run_sh}"
+          echo "Rewrote image tag to: ${new_tag}"
+          
+          git add "${devcontainer_json}" "${run_sh}"
+          if git diff --cached --quiet; then
+            echo "Tags already match; nothing to commit."
+          else
+            # Amend the previous commit to include the tag rewrite, so that the previous container tag is not left in the integration branch history.
+            git commit --amend --no-edit
+            git push --force-with-lease origin "HEAD:${INTEGRATION_BRANCH}"
+          fi
+
+      - name: Update container tags and push to registry
+        working-directory: integration-repo
+        run: |
+          echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+          new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
+          docker tag "${DEVCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${DEVCONTAINER_IMAGE}:${new_tag}"
+          docker tag "${BUILDCONTAINER_IMAGE}:${{ steps.rewrite-tag.outputs.rfi_tag }}" "${BUILDCONTAINER_IMAGE}:${new_tag}"
+
+          echo "Pushing updated container images to registry..."
+          docker push "${DEVCONTAINER_IMAGE}:${new_tag}"
+          docker push "${BUILDCONTAINER_IMAGE}:${new_tag}"
+
+      - name: Package release assets
+        run: |
+          bash "${SCRIPTS_DIR}/package_release_assets.sh" \
+            --tmp-work-dir "${TMP_WORK_DIR}" \
+            --archive-path "${ARCHIVE_PATH}" \
+            --manual-pdf "${MANUAL_PDF}" \
+            --manual-html-dir "${MANUAL_HTML_DIR}" \
+            --prebuilt-dir "${PREBUILT_DIR}" \
+            >> "${GITHUB_ENV}"
+
+      - name: Create or update draft release and upload assets
+        working-directory: integration-repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          shopt -s nullglob
+          assets=( "${RELEASE_ASSETS_DIR}"/* )
+          shopt -u nullglob
+
+          if [[ ${#assets[@]} -eq 0 ]]; then
+            echo "::error::No release assets found in ${RELEASE_ASSETS_DIR}."
+            exit 1
+          fi
+
+          if gh release view "${RELEASE_VERSION}" >/dev/null 2>&1; then
+            is_draft="$(gh release view "${RELEASE_VERSION}" --json isDraft --jq '.isDraft')"
+            if [[ "${is_draft}" != "true" ]]; then
+              echo "::error::Release '${RELEASE_VERSION}' already exists and is published (not a draft); refusing to modify it."
+              exit 1
+            fi
+            echo "Draft release '${RELEASE_VERSION}' already exists; updating assets."
+            gh release upload "${RELEASE_VERSION}" "${assets[@]}" --clobber
+          else
+            echo "Creating draft release '${RELEASE_VERSION}'."
+            # A draft release with a not-yet-existing tag does not create the tag
+            # or point at any commit/branch until it is published.
+            gh release create "${RELEASE_VERSION}" \
+              --draft \
+              --title "${RELEASE_VERSION}" \
+              "${assets[@]}"
+          fi
+
+      - name: Clean up runner resources
+        if: always()
+        run: |
+          set +e
+
+          # Stop and remove the detached devcontainer, if it was started.
+          if [[ -n "${DEV_CONTAINER_ID:-}" ]]; then
+            echo "Removing devcontainer ${DEV_CONTAINER_ID}"
+            docker rm -f "${DEV_CONTAINER_ID}"
+          fi
+
+          # Kill any lingering QEMU processes started by the smoke test.
+          pkill -f qemu-system
+
+          # Drop registry credentials written by docker login.
+          docker logout ghcr.io
+
+          # Remove the temporary working directory used for download/extraction.
+          if [[ -n "${TMP_WORK_DIR:-}" && -d "${TMP_WORK_DIR}" ]]; then
+            echo "Removing temporary work directory ${TMP_WORK_DIR}"
+            sudo rm -rf -- "${TMP_WORK_DIR}"
+          fi
