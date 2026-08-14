@@ -1,0 +1,103 @@
+name: Execute Release Activities
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. v2.0.0-beta2)"
+        required: true
+        type: string
+
+# Only one release should run at a time.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read      # read the release + download its assets
+  pages: write        # publish to GitHub Pages
+  id-token: write     # required by the Pages deployment
+
+env:
+  USER_GUIDE_ASSET: user_guide.tar.gz
+  # Tag from the manual input when dispatched, otherwise the pushed tag.
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  publish-user-guide:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Verify runner prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v gh >/dev/null
+          command -v jq >/dev/null
+          command -v tar >/dev/null
+
+      - name: Verify published release contains the user guide asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${RELEASE_TAG}"
+          echo "Checking release for tag '${tag}'."
+
+          if ! release_json="$(gh release view "${tag}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --json isDraft,assets 2>/dev/null)"; then
+            echo "::error::No release is associated with tag '${tag}'."
+            exit 1
+          fi
+
+          is_draft="$(jq -r '.isDraft' <<<"${release_json}")"
+          if [[ "${is_draft}" != "false" ]]; then
+            echo "::error::Release for tag '${tag}' is a draft, not a published release."
+            exit 1
+          fi
+
+          has_asset="$(jq -r --arg a "${USER_GUIDE_ASSET}" \
+            '[.assets[].name] | index($a) != null' <<<"${release_json}")"
+          if [[ "${has_asset}" != "true" ]]; then
+            echo "::error::Published release for tag '${tag}' does not contain asset '${USER_GUIDE_ASSET}'."
+            exit 1
+          fi
+
+          echo "Published release for tag '${tag}' contains '${USER_GUIDE_ASSET}'."
+
+      - name: Download and extract the user guide asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${RELEASE_TAG}"
+          tmp_dir="$(mktemp -d)"
+
+          gh release download "${tag}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pattern "${USER_GUIDE_ASSET}" \
+            --dir "${tmp_dir}"
+
+          rm -rf _site
+          mkdir -p _site
+          tar -xzf "${tmp_dir}/${USER_GUIDE_ASSET}" -C _site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
