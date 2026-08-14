@@ -23,7 +23,7 @@ if [[ -z "${ARTIFACT_URL}" ]]; then
   exit 1
 fi
 
-# Treat the manual input URL as sensitive operational data.
+# Treat the manual input URL and token as sensitive operational data.
 echo "::add-mask::${ARTIFACT_URL}"
 echo "::add-mask::${ARTIFACTORY_TOKEN}"
 
@@ -33,7 +33,7 @@ extract_root="${tmp_dir}/extracted"
 
 mkdir -p "${extract_root}"
 
-echo "Starting archive download (this may take a while for large files)..."
+echo "Starting upstream delivery archive download (this may take a while for large files)..."
 echo "Download target: ${archive_path}"
 
 curl \
@@ -52,22 +52,50 @@ archive_size_bytes="$(wc -c < "${archive_path}")"
 archive_size_mib="$(awk "BEGIN { printf \"%.2f\", ${archive_size_bytes}/1024/1024 }")"
 echo "Download complete: ${archive_size_bytes} bytes (${archive_size_mib} MiB)."
 
-echo "Starting archive extraction into ${extract_root}..."
+echo "Starting upstream delivery archive extraction into ${extract_root}..."
 
 tar -xzf "${archive_path}" -C "${extract_root}"
 
 echo "Extraction complete."
+
+toolkit_root="${extract_root}/eb_corbos_toolkit"
+workspace_root="${toolkit_root}/workspace"
+devcontainer_archive="${toolkit_root}/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst"
+buildcontainer_archive="${toolkit_root}/containers/buildcontainer-trixie-ebclfsa-amd64.docker-archive.zst"
+run_script="${workspace_root}/scripts/run.sh"
+bitbake_execution_fixer="${workspace_root}/.devcontainer/scripts/check_userns_restriction.sh"
+manual_pdf="${toolkit_root}/doc/user_manual.pdf"
+manual_html_dir="${toolkit_root}/doc/html"
+prebuilt_dir="${workspace_root}/prebuilt"
+
+echo "Validating extracted layout..."
+for f in "${devcontainer_archive}" "${buildcontainer_archive}" "${run_script}" "${bitbake_execution_fixer}" "${manual_pdf}"; do
+  if [[ ! -f "${f}" ]]; then
+    echo "::error::Expected file not found in extracted upstream delivery archive: ${f}"
+    exit 1
+  fi
+done
+for d in "${manual_html_dir}" "${prebuilt_dir}"; do
+  if [[ ! -d "${d}" ]]; then
+    echo "::error::Expected directory not found in extracted upstream delivery archive: ${d}"
+    exit 1
+  fi
+done
+echo "Extracted layout looks good."
 
 # Prepare environment variables for subsequent steps.
 cat >> "${GITHUB_ENV}" << EOF
 TMP_WORK_DIR=${tmp_dir}
 EXTRACT_ROOT=${extract_root}
 ARCHIVE_PATH=${archive_path}
-WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
-DEVCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
-BUILDCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/buildcontainer-trixie-ebclfsa-amd64.docker-archive.zst
+WORKSPACE_ROOT=${workspace_root}
+DEVCONTAINER_ARCHIVE=${devcontainer_archive}
+BUILDCONTAINER_ARCHIVE=${buildcontainer_archive}
 DEVCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64
 BUILDCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64
-RUN_SCRIPT=${extract_root}/eb_corbos_toolkit/workspace/scripts/run.sh
-BITBAKE_EXECUTION_FIXER=${extract_root}/eb_corbos_toolkit/workspace/.devcontainer/scripts/check_userns_restriction.sh
+RUN_SCRIPT=${run_script}
+BITBAKE_EXECUTION_FIXER=${bitbake_execution_fixer}
+MANUAL_PDF=${manual_pdf}
+MANUAL_HTML_DIR=${manual_html_dir}
+PREBUILT_DIR=${prebuilt_dir}
 EOF

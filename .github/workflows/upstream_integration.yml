@@ -73,20 +73,9 @@ jobs:
           sparse-checkout: |
             .github/scripts
 
-      - name: Download and unpack upstream delivery archive
+      - name: Download, unpack, and validate upstream delivery archive
         shell: bash
         run: bash "${SCRIPTS_DIR}/download_archive.sh"
-
-      - name: Validate extracted layout
-        shell: bash
-        run: |
-          set -euo pipefail
-          for f in "${DEVCONTAINER_ARCHIVE}" "${BUILDCONTAINER_ARCHIVE}" "${RUN_SCRIPT}" "${BITBAKE_EXECUTION_FIXER}"; do
-            if [[ ! -f "${f}" ]]; then
-              echo "::error::Expected file not found in extracted payload: ${f}"
-              exit 1
-            fi
-          done
 
       - name: Load container image archives into Docker
         shell: bash
@@ -299,7 +288,7 @@ jobs:
           # Remove the temporary working directory used for download/extraction.
           if [[ -n "${TMP_WORK_DIR:-}" && -d "${TMP_WORK_DIR}" ]]; then
             echo "Removing temporary work directory ${TMP_WORK_DIR}"
-            rm -rf -- "${TMP_WORK_DIR}"
+            sudo rm -rf -- "${TMP_WORK_DIR}"
           fi
 
           exit 0
