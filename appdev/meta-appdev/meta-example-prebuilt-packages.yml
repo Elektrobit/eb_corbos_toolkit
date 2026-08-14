@@ -4,7 +4,7 @@ layer: "meta-example-prebuilt-packages"
 layer_priority: 5
 repos:
   - name: "EB Upstream Baseline"
-    url: "https://linux.elektrobit.com/ebclfsa/test"
+    url: "https://linux.elektrobit.com/ebclfsa/v2.0.0-beta2"
     distributions:
       - "ebcl"
     components:
