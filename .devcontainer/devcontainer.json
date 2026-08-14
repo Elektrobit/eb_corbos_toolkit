@@ -4,7 +4,7 @@
     "name": "EB corbos Toolkit",
     // the container is updated by CI directly "in place" with the same tag,
     // so we always need to pull the latest image manually before starting the container
-    "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v10",
+    "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:RFI_v2.0.0-beta2",
     // set the tag to local if you are using a locally built image
     // "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:local",
     "initializeCommand": ".devcontainer/scripts/initialize.sh",
