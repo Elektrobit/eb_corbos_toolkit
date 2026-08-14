@@ -1,4 +1,14 @@
 # Copyright 2026 Elektrobit. All rights reserved.
+#
+# Execute Release Activities
+#
+# This workflow shall execute all on-release activities for the EB corbos Toolkit.
+# For now, this only publishes the User's Manual to GitHub Pages when a release is created.
+# The workflow runs automatically when a release is published, or manually
+# via workflow_dispatch by supplying the target release tag. It verifies that
+# the release contains the expected User's Manual asset, downloads and extracts
+# it, then deploys the contents to GitHub Pages.
+
 name: Execute Release Activities
 
 on:

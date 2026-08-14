@@ -1,6 +1,18 @@
 # Copyright 2026 Elektrobit. All rights reserved.
 name: Update Toolkit from Upstream Release Archive
 
+# Integrates an upstream EB corbos toolkit release archive into this repository.
+# The workflow downloads and unpacks the delivery archive, loads and smoke-tests
+# the container images (kas build + QEMU boot of the fastdev image), opens or
+# updates an integration pull request, retags and pushes the container images to
+# ghcr.io, and creates/updates a draft GitHub release with the collected assets.
+#
+# Access control: this workflow is manually triggered (workflow_dispatch) and may
+# only be run by a small set of trusted actors. The first job step aborts unless
+# the triggering actor is listed in the WORKFLOW_ALLOWED_ACTORS repository
+# variable (a comma-separated list of GitHub usernames). It also requires a
+# privileged token input, so it must not be exposed to untrusted contributors.
+
 on:
   workflow_dispatch:
     inputs:
