@@ -1,9 +1,8 @@
 name: Execute Release Activities
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -51,19 +50,6 @@ jobs:
 
           tag="${RELEASE_TAG}"
           echo "Checking release for tag '${tag}'."
-
-          if ! release_json="$(gh release view "${tag}" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --json isDraft,assets 2>/dev/null)"; then
-            echo "::error::No release is associated with tag '${tag}'."
-            exit 1
-          fi
-
-          is_draft="$(jq -r '.isDraft' <<<"${release_json}")"
-          if [[ "${is_draft}" != "false" ]]; then
-            echo "::error::Release for tag '${tag}' is a draft, not a published release."
-            exit 1
-          fi
 
           has_asset="$(jq -r --arg a "${USER_GUIDE_ASSET}" \
             '[.assets[].name] | index($a) != null' <<<"${release_json}")"
