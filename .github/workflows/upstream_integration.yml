@@ -154,9 +154,8 @@ jobs:
             echo "No changes to commit; working copy already matches upstream."
           else
             git commit -m "Integrate upstream version ${RELEASE_VERSION}"
+            git push origin "HEAD:${INTEGRATION_BRANCH}"
           fi
-
-          git push origin "HEAD:${INTEGRATION_BRANCH}"
 
       - name: Create or update integration pull request
         id: integration-pr
