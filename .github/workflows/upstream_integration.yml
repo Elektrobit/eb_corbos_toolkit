@@ -1,7 +1,7 @@
 # Copyright 2026 Elektrobit. All rights reserved.
 name: Update Toolkit from Upstream Release Archive
 
-# Integrates an upstream EB corbos toolkit release archive into this repository.
+# Integrates an upstream EB corbos Toolkit release archive into this repository.
 # The workflow downloads and unpacks the delivery archive, loads and smoke-tests
 # the container images (kas build + QEMU boot of the fastdev image), opens or
 # updates an integration pull request, retags and pushes the container images to
@@ -86,7 +86,7 @@ jobs:
             .github/scripts
 
       - name: Download, unpack, and validate upstream delivery archive
-        run: "${SCRIPTS_DIR}/download_archive.sh"
+        run: "${SCRIPTS_DIR}/download_archive.sh" # ATTENTION: this script sets environment variables for later steps
 
       - name: Load container image archives into Docker
         shell: bash
@@ -108,7 +108,7 @@ jobs:
 
       - name: "Test: Boot fastdev image in QEMU"
         shell: bash
-        run: bash "${SCRIPTS_DIR}/qemu_smoke_test.sh"
+        run: bash "${SCRIPTS_DIR}/qemu_smoke_test.sh" # ATTENTION: this script sets environment variables for later steps
 
       - name: Checkout repository for integration
         uses: actions/checkout@v4
@@ -237,7 +237,7 @@ jobs:
 
       - name: Package release assets
         shell: bash
-        run: bash "${SCRIPTS_DIR}/package_release_assets.sh"
+        run: bash "${SCRIPTS_DIR}/package_release_assets.sh" # ATTENTION: this script sets environment variables for later steps
 
       - name: Create or update draft release and upload assets
         working-directory: integration-repo
@@ -288,16 +288,14 @@ jobs:
           fi
 
           # Kill any lingering QEMU processes started by the smoke test.
-          pkill -f qemu-system || true
+          pkill -f qemu-system
 
           # Drop registry credentials written by docker login.
-          docker logout ghcr.io || true
+          docker logout ghcr.io
 
           # Remove the temporary working directory used for download/extraction.
           if [[ -n "${TMP_WORK_DIR:-}" && -d "${TMP_WORK_DIR}" ]]; then
             echo "Removing temporary work directory ${TMP_WORK_DIR}"
             sudo rm -rf -- "${TMP_WORK_DIR}"
           fi
-
-          exit 0
 
