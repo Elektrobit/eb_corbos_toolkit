@@ -79,7 +79,7 @@ jobs:
           echo "::add-mask::${ARTIFACTORY_TOKEN}"
 
           tmp_dir="$(mktemp -d)"
-          archive_path="${tmp_dir}/toolkit.tar.gz"
+          archive_path="${tmp_dir}/eb_corbos_toolkit.tar.gz"
           extract_root="${tmp_dir}/extracted"
 
           mkdir -p "${extract_root}"
@@ -109,6 +109,7 @@ jobs:
           cat >> "${GITHUB_ENV}" << EOF
           TMP_WORK_DIR=${tmp_dir}
           EXTRACT_ROOT=${extract_root}
+          ARCHIVE_PATH=${archive_path}
           WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
           DEVCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
           BUILDCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/buildcontainer-trixie-ebclfsa-amd64.docker-archive.zst
@@ -391,11 +392,10 @@ jobs:
           assets_dir="${TMP_WORK_DIR}/release-assets"
           mkdir -p "${assets_dir}"
 
+          mv "${ARCHIVE_PATH}" "${assets_dir}/eb_corbos_toolkit.tar.gz"
+
           cp "${pdf_src}" "${assets_dir}/user_manual.pdf"
           tar -czf "${assets_dir}/user_manual_html.tar.gz" -C "${html_src}" .
-
-          # Full prebuilt tree as a single archive.
-          tar -czf "${assets_dir}/prebuilt.tar.gz" -C "${prebuilt_src}" .
 
           # Per-target assets: one image archive (named after its .wic file), the
           # SDK sysroot tarball and the SSH target key for every target directory.
