@@ -1,0 +1,206 @@
+# This software is a part of ISAR.
+# Copyright (C) 2023-2024 ilbers GmbH
+# Copyright (C) 2024 Siemens AG
+#
+# Authors:
+#  Uladzimir Bely <ubely@ilbers.de>
+#
+# SPDX-License-Identifier: MIT
+
+menu "Mirror selection"
+	depends on DEBIAN_BUSTER || DEBIAN_BULLSEYE || DEBIAN_BOOKWORM || DEBIAN_TRIXIE || DEBIAN_SID || UBUNTU_FOCAL || UBUNTU_JAMMY || UBUNTU_NOBLE
+
+config MIRROR_DEBIAN
+	bool "Use specific Debian mirror"
+	depends on DEBIAN_BUSTER || DEBIAN_BULLSEYE || DEBIAN_BOOKWORM || DEBIAN_TRIXIE || DEBIAN_SID
+	help
+	  Select better local Debian mirror instead of deb.debian.org
+
+config MIRROR_DEBIAN_URL
+	string "URL of Debian mirror"
+	default "http://deb.debian.org"
+	depends on MIRROR_DEBIAN
+
+config KAS_INCLUDE_MIRROR_DEBIAN
+	string
+	default "kas/opt/mirror-debian.yaml"
+	depends on MIRROR_DEBIAN
+
+
+config MIRROR_UBUNTU
+	bool "Use specific Ubuntu mirror"
+	depends on UBUNTU_FOCAL || UBUNTU_JAMMY
+	help
+	  Select better local Ubuntu mirror instead of archive.ubuntu.com
+
+config MIRROR_UBUNTU_URL
+	string "URL of Ubuntu mirror"
+	default "http://archive.ubuntu.com"
+	depends on MIRROR_UBUNTU
+
+config KAS_INCLUDE_MIRROR_UBUNTU
+	string
+	default "kas/opt/mirror-ubuntu.yaml"
+	depends on MIRROR_UBUNTU
+
+config USE_APT_SNAPSHOT
+	bool "Use the distros snapshot mirror"
+	depends on !MIRROR_DEBIAN && (DEBIAN_BUSTER || DEBIAN_BULLSEYE || DEBIAN_BOOKWORM || DEBIAN_TRIXIE || DEBIAN_SID || UBUNTU_FOCAL || UBUNTU_JAMMY || UBUNTU_NOBLE)
+	help
+		Use a snapshot mirror for the selected distribution.
+
+choice
+	prompt "Snapshot date"
+	depends on USE_APT_SNAPSHOT
+	default APT_SNAPSHOT_GIT_DATE
+
+config APT_SNAPSHOT_GIT_DATE
+	bool "Timestamp of latest git commit"
+
+config APT_SNAPSHOT_CUSTOM_DATE
+	bool "Custom date"
+
+endchoice
+
+config ISAR_APT_SNAPSHOT_DATE
+	string "Custom snapshot date"
+	depends on APT_SNAPSHOT_CUSTOM_DATE
+	default "20240211T000000Z"
+
+config KAS_INCLUDE_APT_SNAPSHOT
+	string
+	default "kas/opt/mirror-snapshot.yaml"
+	depends on USE_APT_SNAPSHOT
+
+endmenu
+
+
+menu "User management"
+
+config USER_ROOT
+	bool "Activate 'root' user"
+	help
+	  Enables root user.
+
+config KAS_USER_ROOT_PASSWORD
+	string "Password for 'root' user"
+	default "root"
+	depends on USER_ROOT
+	help
+	  Set password for 'root' user.
+
+config KAS_INCLUDE_USER_ROOT
+	string
+	default "kas/opt/user-root.yaml"
+	depends on USER_ROOT
+
+
+config USER_ISAR
+	bool "Activate 'isar' user"
+	default y
+	help
+	  Enables `isar` user.
+
+config KAS_USER_ISAR_PASSWORD
+	string "Password for 'isar' user"
+	default "isar"
+	depends on USER_ISAR
+	help
+	  Set password for 'isar' user.
+
+config KAS_INCLUDE_USER_ISAR
+	string
+	default "kas/opt/user-isar.yaml"
+	depends on USER_ISAR
+
+endmenu
+
+config KAS_IMAGE_FSTYPES
+	string "Additional image fstypes"
+	default ""
+	help
+	  Space-separated list of additional image fstypes to generate. Default
+	  machine configurations set up IMAGE_FSTYPES variable, but it's possible
+	  to select additonal ones to generate.
+	  The following IMAGE_FSTYPES are supported:
+	    cpio
+	    fit
+	    docker-archive
+	    ext4
+	    ova
+	    tar
+	    ubi
+	    ubifs
+	    wic
+	  They can be followed by suffixes like ".gz" for compressing the image
+
+config KAS_INCLUDE_IMAGE_FSTYPES
+	string
+	default "kas/opt/image-fstypes.yaml"
+
+
+config COMPAT_ARCH
+	bool "Enable compat arch support"
+
+config KAS_INCLUDE_COMPAT_ARCH
+	string
+	default "kas/opt/compat-arch.yaml"
+	depends on COMPAT_ARCH
+
+
+config ISAR_CROSS_COMPILE
+	bool "Enable cross compilation mode"
+	default y
+
+config KAS_ISAR_CROSS_COMPILE
+	string
+	default "1" if ISAR_CROSS_COMPILE
+	default "0" if !ISAR_CROSS_COMPILE
+
+config KAS_INCLUDE_ISAR_CROSS_COMPILE
+	string
+	default "kas/opt/crosscompile.yaml"
+
+
+config USE_CCACHE
+	bool "Use ccache during build"
+	default y
+
+config KAS_INCLUDE_USE_CCACHE
+	string
+	default "kas/opt/ccache.yaml"
+	depends on USE_CCACHE
+
+
+config CACHE_DEB_SRC
+	bool "Cache all source packages"
+	help
+	  This feature allows to download srcpackages for any binary package that
+	  took part in the build (including ones downloaded from distro mirrors).
+
+config KAS_INCLUDE_CACHE_DEB_SRC
+	string
+	default "kas/opt/cache-deb-src.yaml"
+	depends on CACHE_DEB_SRC
+
+
+config CACHE_DBG_PKGS
+	bool "Cache all debug packages"
+	help
+	  This feature allows to download debug symbol packages for any binary package
+	  that took part in the build (including ones downloaded from distro mirrors).
+
+config KAS_INCLUDE_CACHE_DBG_PKGS
+	string
+	default "kas/opt/cache-dbg-pkgs.yaml"
+	depends on CACHE_DBG_PKGS
+
+config USE_DRACUT
+	bool "Use dracut to generate the initramfs"
+	help
+          This feature enables generating the initramfs using the dracut tool
+
+config KAS_INCLUDE_USE_DRACUT
+	string
+	default "kas/opt/dracut.yaml"
+	depends on USE_DRACUT

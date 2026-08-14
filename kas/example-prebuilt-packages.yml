@@ -1,0 +1,10 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+
+repos:
+  meta-example-prebuilt-packages:
+    path: "appdev/meta-appdev/meta-example-prebuilt-packages"
+    layers:
+      .:

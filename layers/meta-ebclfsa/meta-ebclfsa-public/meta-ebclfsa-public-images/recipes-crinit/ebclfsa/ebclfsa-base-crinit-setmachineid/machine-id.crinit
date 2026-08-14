@@ -1,0 +1,6 @@
+NAME = set-machine-id
+
+COMMAND = /usr/sbin/setmachineid
+DEPENDS = ""
+PROVIDES = machine-id:wait
+RESPAWN = NO

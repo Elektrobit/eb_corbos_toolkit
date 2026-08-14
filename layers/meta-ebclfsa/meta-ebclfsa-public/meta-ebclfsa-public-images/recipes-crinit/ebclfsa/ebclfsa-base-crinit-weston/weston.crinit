@@ -1,0 +1,14 @@
+NAME = weston
+
+ENV_SET = XDG_RUNTIME_DIR "/run/user/0"
+
+# Prepare the runtime directory for Weston/Wayland
+COMMAND = /bin/mkdir -p -m 0700 /run/user/0
+
+DEPENDS = udevd:wait
+RESPAWN = NO
+
+# Weston is NOT auto-started. To launch manually:
+#   export XDG_RUNTIME_DIR=/run/user/0
+#   weston &
+# Clients need: WAYLAND_DISPLAY=wayland-1
