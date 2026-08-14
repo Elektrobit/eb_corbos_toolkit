@@ -86,7 +86,15 @@ jobs:
             .github/scripts
 
       - name: Download, unpack, and validate upstream delivery archive
-        run: "${SCRIPTS_DIR}/download_archive.sh" # ATTENTION: this script sets environment variables for later steps
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${{ inputs.artifact_url }}"
+          echo "::add-mask::${{ inputs.artifactory_token }}"
+          "${SCRIPTS_DIR}/download_archive.sh" \
+            --url "${{ inputs.artifact_url }}" \
+            --token "${{ inputs.artifactory_token }}" \
+            >> "${GITHUB_ENV}"
 
       - name: Load container image archives into Docker
         shell: bash
@@ -108,7 +116,12 @@ jobs:
 
       - name: "Test: Boot fastdev image in QEMU"
         shell: bash
-        run: bash "${SCRIPTS_DIR}/qemu_smoke_test.sh" # ATTENTION: this script sets environment variables for later steps
+        run: |
+          set -euo pipefail
+          bash "${SCRIPTS_DIR}/qemu_smoke_test.sh" \
+            --workspace-root "${WORKSPACE_ROOT}" \
+            --run-script "${RUN_SCRIPT}" \
+            >> "${GITHUB_ENV}"
 
       - name: Checkout repository for integration
         uses: actions/checkout@v4
@@ -140,7 +153,11 @@ jobs:
 
       - name: Integrate upstream workspace
         working-directory: integration-repo
-        run: "${SCRIPTS_DIR}/integrate_workspace.sh"
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${SCRIPTS_DIR}/integrate_workspace.sh" \
+            --workspace-root "${WORKSPACE_ROOT}"
 
       - name: Commit integrated upstream workspace and push to integration branch
         working-directory: integration-repo
@@ -237,7 +254,15 @@ jobs:
 
       - name: Package release assets
         shell: bash
-        run: bash "${SCRIPTS_DIR}/package_release_assets.sh" # ATTENTION: this script sets environment variables for later steps
+        run: |
+          set -euo pipefail
+          bash "${SCRIPTS_DIR}/package_release_assets.sh" \
+            --tmp-work-dir "${TMP_WORK_DIR}" \
+            --archive-path "${ARCHIVE_PATH}" \
+            --manual-pdf "${MANUAL_PDF}" \
+            --manual-html-dir "${MANUAL_HTML_DIR}" \
+            --prebuilt-dir "${PREBUILT_DIR}" \
+            >> "${GITHUB_ENV}"
 
       - name: Create or update draft release and upload assets
         working-directory: integration-repo
@@ -298,4 +323,3 @@ jobs:
             echo "Removing temporary work directory ${TMP_WORK_DIR}"
             sudo rm -rf -- "${TMP_WORK_DIR}"
           fi
-

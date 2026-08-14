@@ -5,58 +5,75 @@
 # devcontainer, wait for SSH availability, power it down cleanly and confirm the
 # shutdown message appears in the QEMU log.
 #
-# Required environment:
-#   WORKSPACE_ROOT  Extracted upstream workspace directory.
-#   RUN_SCRIPT      Path to the workspace run.sh helper.
-#   GITHUB_ENV      Path to the environment file for downstream steps.
+# Usage: qemu_smoke_test.sh --workspace-root <DIR> --run-script <PATH>
 set -euo pipefail
 
-cd "${WORKSPACE_ROOT}"
+workspace_root=""
+run_script=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --workspace-root) workspace_root="$2"; shift 2 ;;
+    --run-script)     run_script="$2"; shift 2 ;;
+    *) echo "Unknown argument: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "${workspace_root}" ]]; then
+  echo "ERROR: Required argument --workspace-root is not set." >&2
+  exit 1
+fi
+
+if [[ -z "${run_script}" ]]; then
+  echo "ERROR: Required argument --run-script is not set." >&2
+  exit 1
+fi
+
+cd "${workspace_root}"
 
 # Run the dev container in detached mode and keep it running.
 export EXTRA_DOCKER_OPTIONS="-d --log-driver local"
 LOG_FILE=$(mktemp -t ebcl_run_devcontainer-XXXXXX.log 2>/dev/null) ||
   LOG_FILE="/tmp/ebcl_run_devcontainer.log"
 
-echo "Starting devcontainer in the background"
-DEV_CONTAINER_ID=$("${RUN_SCRIPT}" -d -- bash -c "sleep infinity" 2>&1 | tee "${LOG_FILE}" | grep -oE '^[0-9a-f]{64}$')
+echo "Starting devcontainer in the background" >&2
+DEV_CONTAINER_ID=$("${run_script}" -d -- bash -c "sleep infinity" 2>&1 | tee "${LOG_FILE}" | grep -oE '^[0-9a-f]{64}$')
 if [[ -z "${DEV_CONTAINER_ID}" ]]; then
-  echo "::error::Failed to start devcontainer. Log output:"
-  cat "${LOG_FILE}"
+  echo "ERROR: Failed to start devcontainer. Log output:" >&2
+  cat "${LOG_FILE}" >&2
   exit 1
 fi
 
-# Expose the container ID so the always() cleanup step can tear it down.
-echo "DEV_CONTAINER_ID=${DEV_CONTAINER_ID}" >> "${GITHUB_ENV}"
+echo "DEV_CONTAINER_ID=${DEV_CONTAINER_ID}"
 sleep 10
 
 devcontainer_exec() {
   docker exec "${DEV_CONTAINER_ID}" "$@"
 }
 
-echo "Running fastdev in qemu in background, logging to qemu.log"
+echo "Running fastdev in qemu in background, logging to qemu.log" >&2
 devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
 devcontainer_exec bash -c \
   "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
 
-echo "Terminating fastdev"
+echo "Terminating fastdev" >&2
 devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
 
-echo "Waiting for fastdev to power down"
+echo "Waiting for fastdev to power down" >&2
 max_tries=20
 msg="Power down"
-log="${WORKSPACE_ROOT}/qemu.log"
+log="${workspace_root}/qemu.log"
 
 for i in $(seq 1 "${max_tries}"); do
   if grep -q "${msg}" "${log}" 2>/dev/null; then
-    echo "Waiting for \"${msg}\" message in ${log} succeeded"
+    echo "Waiting for \"${msg}\" message in ${log} succeeded" >&2
     rm -f "${log}"
     exit 0
   fi
-  echo "Waiting for \"${msg}\" message in ${log} ... (${i}/${max_tries})"
+  echo "Waiting for \"${msg}\" message in ${log} ... (${i}/${max_tries})" >&2
   sleep 1
 done
 
-echo "Error: Waiting for \"${msg}\" message in ${log} timed out!"
-cat "${log}"
+echo "ERROR: Waiting for \"${msg}\" message in ${log} timed out!" >&2
+cat "${log}" >&2
 exit 1

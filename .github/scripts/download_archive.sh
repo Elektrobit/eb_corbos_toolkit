@@ -1,31 +1,32 @@
 #!/usr/bin/env bash
 # Copyright 2026 Elektrobit. All rights reserved.
 #
-# Download the upstream toolkit archive referenced by the workflow_dispatch
-# inputs, extract it into a temporary directory and export the resulting paths
-# to GITHUB_ENV for subsequent steps.
+# Download the upstream toolkit archive, extract it into a temporary directory
+# and print the resulting paths as KEY=VALUE lines on stdout.
 #
-# Required environment:
-#   GITHUB_EVENT_PATH  Path to the event payload holding the dispatch inputs.
-#   GITHUB_ENV         Path to the environment file for downstream steps.
+# Usage: download_archive.sh --url <URL> --token <TOKEN>
 set -euo pipefail
 
-ARTIFACT_URL="$(jq -r '.inputs.artifact_url // empty' "${GITHUB_EVENT_PATH}")"
-ARTIFACTORY_TOKEN="$(jq -r '.inputs.artifactory_token // empty' "${GITHUB_EVENT_PATH}")"
+url=""
+token=""
 
-if [[ -z "${ARTIFACTORY_TOKEN}" ]]; then
-  echo "::error::Required workflow input artifactory_token is not set."
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --url)   url="$2"; shift 2 ;;
+    --token) token="$2"; shift 2 ;;
+    *) echo "Unknown argument: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "${url}" ]]; then
+  echo "ERROR: Required argument --url is not set." >&2
   exit 1
 fi
 
-if [[ -z "${ARTIFACT_URL}" ]]; then
-  echo "::error::Required workflow input artifact_url is not set."
+if [[ -z "${token}" ]]; then
+  echo "ERROR: Required argument --token is not set." >&2
   exit 1
 fi
-
-# Treat the manual input URL and token as sensitive operational data.
-echo "::add-mask::${ARTIFACT_URL}"
-echo "::add-mask::${ARTIFACTORY_TOKEN}"
 
 tmp_dir="$(mktemp -d)"
 archive_path="${tmp_dir}/eb_corbos_toolkit.tar.gz"
@@ -33,8 +34,8 @@ extract_root="${tmp_dir}/extracted"
 
 mkdir -p "${extract_root}"
 
-echo "Starting upstream delivery archive download (this may take a while for large files)..."
-echo "Download target: ${archive_path}"
+echo "Starting upstream delivery archive download (this may take a while for large files)..." >&2
+echo "Download target: ${archive_path}" >&2
 
 curl \
   --fail \
@@ -44,19 +45,19 @@ curl \
   --retry 3 \
   --retry-delay 5 \
   --retry-all-errors \
-  --header "Authorization: Bearer ${ARTIFACTORY_TOKEN}" \
+  --header "Authorization: Bearer ${token}" \
   --output "${archive_path}" \
-  --url "${ARTIFACT_URL}"
+  --url "${url}"
 
 archive_size_bytes="$(wc -c < "${archive_path}")"
 archive_size_mib="$(awk "BEGIN { printf \"%.2f\", ${archive_size_bytes}/1024/1024 }")"
-echo "Download complete: ${archive_size_bytes} bytes (${archive_size_mib} MiB)."
+echo "Download complete: ${archive_size_bytes} bytes (${archive_size_mib} MiB)." >&2
 
-echo "Starting upstream delivery archive extraction into ${extract_root}..."
+echo "Starting upstream delivery archive extraction into ${extract_root}..." >&2
 
 tar -xzf "${archive_path}" -C "${extract_root}"
 
-echo "Extraction complete."
+echo "Extraction complete." >&2
 
 toolkit_root="${extract_root}/eb_corbos_toolkit"
 workspace_root="${toolkit_root}/workspace"
@@ -68,23 +69,22 @@ manual_pdf="${toolkit_root}/doc/user_manual.pdf"
 manual_html_dir="${toolkit_root}/doc/html"
 prebuilt_dir="${workspace_root}/prebuilt"
 
-echo "Validating extracted layout..."
+echo "Validating extracted layout..." >&2
 for f in "${devcontainer_archive}" "${buildcontainer_archive}" "${run_script}" "${bitbake_execution_fixer}" "${manual_pdf}"; do
   if [[ ! -f "${f}" ]]; then
-    echo "::error::Expected file not found in extracted upstream delivery archive: ${f}"
+    echo "ERROR: Expected file not found in extracted upstream delivery archive: ${f}" >&2
     exit 1
   fi
 done
 for d in "${manual_html_dir}" "${prebuilt_dir}"; do
   if [[ ! -d "${d}" ]]; then
-    echo "::error::Expected directory not found in extracted upstream delivery archive: ${d}"
+    echo "ERROR: Expected directory not found in extracted upstream delivery archive: ${d}" >&2
     exit 1
   fi
 done
-echo "Extracted layout looks good."
+echo "Extracted layout looks good." >&2
 
-# Prepare environment variables for subsequent steps.
-cat >> "${GITHUB_ENV}" << EOF
+cat << EOF
 TMP_WORK_DIR=${tmp_dir}
 EXTRACT_ROOT=${extract_root}
 ARCHIVE_PATH=${archive_path}

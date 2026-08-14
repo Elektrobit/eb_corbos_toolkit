@@ -2,35 +2,54 @@
 # Copyright 2026 Elektrobit. All rights reserved.
 #
 # Collect the release assets (toolkit archive, user manual, prebuilt per-target
-# images, SDK sysroots and SSH keys) into a single directory and export its path
-# to GITHUB_ENV.
+# images, SDK sysroots and SSH keys) into a single directory and print its path
+# as a KEY=VALUE line on stdout.
 #
-# Required environment:
-#   TMP_WORK_DIR    Temporary working directory for staging assets.
-#   ARCHIVE_PATH    Path to the downloaded toolkit archive.
-#   MANUAL_PDF      Path to the user manual PDF.
-#   MANUAL_HTML_DIR Directory holding the HTML user manual.
-#   PREBUILT_DIR    Directory holding the per-target prebuilt artifacts.
-#   GITHUB_ENV      Path to the environment file for downstream steps.
+# Usage: package_release_assets.sh --tmp-work-dir <DIR> --archive-path <FILE> \
+#          --manual-pdf <FILE> --manual-html-dir <DIR> --prebuilt-dir <DIR>
 set -euo pipefail
 
-assets_dir="${TMP_WORK_DIR}/release-assets"
+tmp_work_dir=""
+archive_path=""
+manual_pdf=""
+manual_html_dir=""
+prebuilt_dir=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --tmp-work-dir)   tmp_work_dir="$2"; shift 2 ;;
+    --archive-path)   archive_path="$2"; shift 2 ;;
+    --manual-pdf)     manual_pdf="$2"; shift 2 ;;
+    --manual-html-dir) manual_html_dir="$2"; shift 2 ;;
+    --prebuilt-dir)   prebuilt_dir="$2"; shift 2 ;;
+    *) echo "Unknown argument: $1" >&2; exit 1 ;;
+  esac
+done
+
+for arg_name in tmp_work_dir archive_path manual_pdf manual_html_dir prebuilt_dir; do
+  if [[ -z "${!arg_name}" ]]; then
+    echo "ERROR: Required argument --${arg_name//_/-} is not set." >&2
+    exit 1
+  fi
+done
+
+assets_dir="${tmp_work_dir}/release-assets"
 mkdir -p "${assets_dir}"
 
-mv "${ARCHIVE_PATH}" "${assets_dir}/eb_corbos_toolkit.tar.gz"
-cp "${MANUAL_PDF}" "${assets_dir}/user_manual.pdf"
-tar -czf "${assets_dir}/user_manual_html.tar.gz" -C "${MANUAL_HTML_DIR}" .
+mv "${archive_path}" "${assets_dir}/eb_corbos_toolkit.tar.gz"
+cp "${manual_pdf}" "${assets_dir}/user_manual.pdf"
+tar -czf "${assets_dir}/user_manual_html.tar.gz" -C "${manual_html_dir}" .
 
 # Per-target assets: one image archive (named after its .wic file), the SDK
 # sysroot tarball and the SSH target key for every target directory.
-for target_dir in "${PREBUILT_DIR}"/*/; do
+for target_dir in "${prebuilt_dir}"/*/; do
   [[ -d "${target_dir}" ]] || continue
 
   image_dir="${target_dir}image"
   if [[ -d "${image_dir}" ]]; then
     wic_file="$(find "${image_dir}" -maxdepth 1 -name '*.wic' -print -quit)"
     if [[ -z "${wic_file}" ]]; then
-      echo "::error::No .wic file found in ${image_dir}."
+      echo "ERROR: No .wic file found in ${image_dir}." >&2
       exit 1
     fi
     image_base="$(basename "${wic_file}" .wic)"
@@ -48,4 +67,4 @@ for target_dir in "${PREBUILT_DIR}"/*/; do
   fi
 done
 
-echo "RELEASE_ASSETS_DIR=${assets_dir}" >> "${GITHUB_ENV}"
+echo "RELEASE_ASSETS_DIR=${assets_dir}"

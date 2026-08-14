@@ -5,12 +5,25 @@
 # preserving repository-owned metadata files. Must be run from the root of the
 # integration repository checkout.
 #
-# Required environment:
-#   WORKSPACE_ROOT  Extracted upstream workspace directory to copy in.
+# Usage: integrate_workspace.sh --workspace-root <DIR>
 set -euo pipefail
 
-if [[ ! -d "${WORKSPACE_ROOT}" ]]; then
-  echo "::error::WORKSPACE_ROOT '${WORKSPACE_ROOT}' does not exist."
+workspace_root=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --workspace-root) workspace_root="$2"; shift 2 ;;
+    *) echo "Unknown argument: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "${workspace_root}" ]]; then
+  echo "ERROR: Required argument --workspace-root is not set." >&2
+  exit 1
+fi
+
+if [[ ! -d "${workspace_root}" ]]; then
+  echo "ERROR: Workspace root '${workspace_root}' does not exist." >&2
   exit 1
 fi
 
@@ -42,4 +55,4 @@ done < <(find . -mindepth 1 -maxdepth 1 -print0)
 
 # Copy the upstream workspace on top, preserving flags, mtimes, ownership.
 # Ignore the "prebuilt" and "build" sub-folders.
-rsync -a --exclude='prebuilt' --exclude='build' "${WORKSPACE_ROOT}/." .
+rsync -a --exclude='prebuilt' --exclude='build' "${workspace_root}/." .
