@@ -1,5 +1,4 @@
-# Copyright 2025 Elektrobit Automotive GmbH
-# All rights reserved
+# Copyright 2025 Elektrobit. All rights reserved.
 
 # Include EBcLfsA specific Settings
 include("$ENV{TOOLCHAIN_BASE}/common/base.cmake")

@@ -1,0 +1,7 @@
+# Persistent data partition
+LABEL=data      /data           auto        defaults    0 2
+
+# Temporary and pseudofilesystems
+none            /sys/fs/cgroup  cgroup2     defaults    0 0
+none            /var/log        tmpfs       defaults    0 0
+none            /dev/shm        tmpfs       defaults    0 0

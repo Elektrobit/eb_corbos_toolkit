@@ -1,0 +1,15 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - "includes/public.yml"
+
+machine: "container-amd64"
+
+# Must be top-level. Cannot use quotes for the value here
+build_system: isar
+
+target:
+  - "buildcontainer"
+  - "devcontainer"

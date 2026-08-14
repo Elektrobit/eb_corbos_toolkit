@@ -1,5 +1,4 @@
-# Copyright 2025 Elektrobit Automotive GmbH
-# All rights reserved
+# Copyright 2025 Elektrobit. All rights reserved.
 
 cmake_minimum_required(VERSION 3.23)
 project(Hello LANGUAGES C)
@@ -14,9 +13,11 @@ include(GNUInstallDirs)
 install(TARGETS hello DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # Process crinit file and install
-# Enable the following to lines for crinit integration
+# Enable the following two lines for crinit integration
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hello.crinit.template ${CMAKE_CURRENT_BINARY_DIR}/hello.crinit USE_SOURCE_PERMISSIONS)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/hello.crinit DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/crinit/crinit.d/)
 
-# Create app specific gdbinit
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/app_gdbinit.template ${CMAKE_CURRENT_BINARY_DIR}/app_gdbinit USE_SOURCE_PERMISSIONS)
+# Create gdbinit
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/app_gdbinit.template ${CMAKE_CURRENT_BINARY_DIR}/.gdbinit USE_SOURCE_PERMISSIONS)
+endif()

@@ -1,0 +1,13 @@
+#
+# Copyright (c) Siemens AG, 2023
+#
+# Authors:
+#  Su Bao Cheng <baocheng.su@siemens.com>
+#
+# SPDX-License-Identifier: MIT
+#
+
+/usr/sbin/modprobe optee
+/usr/sbin/tee-supplicant -d
+
+/usr/bin/pgrep tee-supplicant > /dev/null || panic "Can't start the tee-supplicant daemon!"

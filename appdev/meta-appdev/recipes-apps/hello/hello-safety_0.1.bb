@@ -1,11 +1,28 @@
-# Copyright 2025 Elektrobit Automotive GmbH
-# All rights reserved
+# Copyright 2025 Elektrobit. All rights reserved.
 
 DESCRIPTION = "Hello Safety application"
 MAINTAINER = "Hello Safety maintainer"
 
 inherit dpkg
-require common_appdev.inc
+
+SRC_URI = " \
+    file:///workspace/appdev/apps/hello-safety/ \
+    file:///workspace/appdev/cmake/toolchain \
+    file://rules \
+"
+
+# Copy source and CMake toolchain files from fetched directories.
+prepare_app_source(){
+    cp ${WORKDIR}/workspace/appdev/apps/hello-safety/hello.c ${S}
+    cp ${WORKDIR}/workspace/appdev/apps/hello-safety/CMakeLists.txt ${S}
+    cp -r ${WORKDIR}/workspace/appdev/cmake ${S}
+}
+
+do_prepare_build[cleandirs] += "${S}/debian"
+do_prepare_build() {
+    prepare_app_source
+    deb_debianize
+}
 
 # BitBake recipe dependencies
 DEPENDS:append = " \
@@ -20,7 +37,8 @@ DEPENDS:append = " \
 
 # lisa-libc is only available for arm64
 DEPENDS:append:arm64 = " \
-    lisa-libc \
+    lisa-libc-dev \
+    lisa-libc-tools-clang \
 "
 
 # Build dependencies for the debian/control file

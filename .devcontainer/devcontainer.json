@@ -1,33 +1,70 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-    "name": "EBcL SDK",
-    "image": "artifactory.elektrobit.com/eb_corbos_linux-snapshots-docker/ebcl-sdk/devcontainer-amd64:main",
+    "name": "EB corbos Toolkit",
+    // the container is updated by CI directly "in place" with the same tag,
+    // so we always need to pull the latest image manually before starting the container
+    "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v9",
     // set the tag to local if you are using a locally built image
-    //"image": "artifactory.elektrobit.com/eb_corbos_linux-releases-docker/ebcl-sdk/devcontainer-amd64:local",
-    "postStartCommand": "${PWD}/.devcontainer/enter_container.sh",
-    "postCreateCommand": "${PWD}/.devcontainer/setup_binfmt_support.sh",
+    // "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:local",
+    "initializeCommand": ".devcontainer/scripts/initialize.sh",
+    "postStartCommand": {
+        "Setup kas git config": ".devcontainer/scripts/setup_kas_gitconfig.sh",
+        "Check credentials": ".devcontainer/scripts/setup_credentials.sh --check",
+        "Setup target connections": ".devcontainer/scripts/setup_targets.sh",
+        "Entering container": ".devcontainer/scripts/enter_container.sh"
+    },
+    "postCreateCommand": {
+        "Setup binfmt support": ".devcontainer/scripts/setup_binfmt_support.sh",
+        "Setup persistent bash history": ".devcontainer/scripts/setup_command_history.sh"
+    },
+    "containerEnv": {
+        "GITCONFIG_FILE": "/workspace/.devcontainer/kas.gitconfig",
+        // Unfortunately, BitBake requires this in any case - even if the .netrc file is located in the default location.
+        "NETRC_FILE": "/home/developer/.netrc"
+    },
     "containerUser": "developer",
     "mounts": [
-        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/developer/.ssh,type=bind,consistency=cached",
-        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gnupg,target=/home/developer/.gnupg,type=bind,consistency=cached",
-        "source=/dev,target=/dev,type=bind"
+        {
+            "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.ssh",
+            "target": "/home/developer/.ssh",
+            "type": "bind"
+        },
+        {
+            "source": "${localWorkspaceFolder}/.devcontainer/credentials.netrc",
+            "target": "/home/developer/.netrc",
+            "type": "bind"
+        },
+        {
+            "source": "/dev",
+            "target": "/dev",
+            "type": "bind"
+        },
+        {
+            "source": "eb-corbos-toolkit-bash-history-${devcontainerId}",
+            "target": "/commandhistory",
+            "type": "volume"
+        }
     ],
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
     "workspaceFolder": "/workspace",
     "privileged": true,
     "runArgs": [
-        "--hostname", "ebcl-sdk"
+        "--hostname",
+        "eb-corbos-toolkit",
+        "--env-file",
+        "${localWorkspaceFolder}/.devcontainer/timezone.env"
     ],
     "customizations": {
         "vscode": {
             "extensions": [
+                "ms-python.python@2026.5.2026032701",
                 "ms-vscode.cpptools-extension-pack@1.3.1"
-            ]
-        },
-        "settings": {
-            "cmake.configureOnOpen": false,
-            "taskExplorer.showHiddenWsTasks": false
+            ],
+            "settings": {
+                "cmake.configureOnOpen": false,
+                "taskExplorer.showHiddenWsTasks": false
+            }
         }
     }
 }
