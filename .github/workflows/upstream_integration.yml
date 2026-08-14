@@ -1,3 +1,4 @@
+# Copyright 2026 Elektrobit. All rights reserved.
 name: Update Toolkit from Upstream Release Archive
 
 on:
@@ -32,6 +33,8 @@ jobs:
     name: Integrate Upstream Release Archive
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      SCRIPTS_DIR: ${{ github.workspace }}/.github/scripts
 
     steps:
       - name: Authorize triggering actor
@@ -64,69 +67,15 @@ jobs:
           command -v docker >/dev/null
           command -v jq >/dev/null
 
+      - name: Checkout workflow scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/scripts
+
       - name: Download and unpack upstream delivery archive
         shell: bash
-        run: |
-          set -euo pipefail
-
-          ARTIFACT_URL="$(jq -r '.inputs.artifact_url // empty' "${GITHUB_EVENT_PATH}")"
-          ARTIFACTORY_TOKEN="$(jq -r '.inputs.artifactory_token // empty' "${GITHUB_EVENT_PATH}")"
-
-          if [[ -z "${ARTIFACTORY_TOKEN:-}" ]]; then
-            echo "::error::Required workflow input artifactory_token is not set."
-            exit 1
-          fi
-
-          if [[ -z "${ARTIFACT_URL:-}" ]]; then
-            echo "::error::Required workflow input artifact_url is not set."
-            exit 1
-          fi
-
-          # Treat the manual input URL as sensitive operational data.
-          echo "::add-mask::${ARTIFACT_URL}"
-          echo "::add-mask::${ARTIFACTORY_TOKEN}"
-
-          tmp_dir="$(mktemp -d)"
-          archive_path="${tmp_dir}/eb_corbos_toolkit.tar.gz"
-          extract_root="${tmp_dir}/extracted"
-
-          mkdir -p "${extract_root}"
-
-          echo "Starting archive download (this may take a while for large files)..."
-          echo "Download target: ${archive_path}"
-
-          curl \
-            --fail \
-            --progress-bar \
-            --show-error \
-            --location \
-            --header "Authorization: Bearer ${ARTIFACTORY_TOKEN}" \
-            --output "${archive_path}" \
-            --url "${ARTIFACT_URL}"
-
-          archive_size_bytes="$(wc -c < "${archive_path}")"
-          archive_size_mib="$(awk "BEGIN { printf \"%.2f\", ${archive_size_bytes}/1024/1024 }")"
-          echo "Download complete: ${archive_size_bytes} bytes (${archive_size_mib} MiB)."
-
-          echo "Starting archive extraction into ${extract_root}..."
-
-          tar -xzf "${archive_path}" -C "${extract_root}"
-
-          echo "Extraction complete."
-
-          # prepare environment variables for subsequent steps
-          cat >> "${GITHUB_ENV}" << EOF
-          TMP_WORK_DIR=${tmp_dir}
-          EXTRACT_ROOT=${extract_root}
-          ARCHIVE_PATH=${archive_path}
-          WORKSPACE_ROOT=${extract_root}/eb_corbos_toolkit/workspace
-          DEVCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/devcontainer-trixie-ebclfsa-amd64.docker-archive.zst
-          BUILDCONTAINER_ARCHIVE=${extract_root}/eb_corbos_toolkit/containers/buildcontainer-trixie-ebclfsa-amd64.docker-archive.zst
-          DEVCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64
-          BUILDCONTAINER_IMAGE=ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64
-          RUN_SCRIPT=${extract_root}/eb_corbos_toolkit/workspace/scripts/run.sh
-          BITBAKE_EXECUTION_FIXER=${extract_root}/eb_corbos_toolkit/workspace/.devcontainer/scripts/check_userns_restriction.sh
-          EOF
+        run: bash "${SCRIPTS_DIR}/download_archive.sh"
 
       - name: Validate extracted layout
         shell: bash
@@ -161,54 +110,7 @@ jobs:
 
       - name: "Test: Boot fastdev image in QEMU"
         shell: bash
-        run: |
-          cd "${WORKSPACE_ROOT}"
-          # run dev container in detached mode and keep it running
-          export EXTRA_DOCKER_OPTIONS="-d --log-driver local"
-          LOG_FILE=$(mktemp -t ebcl_run_devcontainer-XXXXXX.log 2>/dev/null) || \
-            LOG_FILE="/tmp/ebcl_run_devcontainer.log"
-
-          echo "Starting devcontainer in the background"
-          DEV_CONTAINER_ID=$("${RUN_SCRIPT}" -d -- bash -c "sleep infinity" 2>&1 | tee "$LOG_FILE" | grep -oE '^[0-9a-f]{64}$')
-          if [[ -z "${DEV_CONTAINER_ID}" ]]; then
-              echo "::error::Failed to start devcontainer. Log output:"
-              cat "$LOG_FILE"
-              exit 1
-          fi
-          # Expose the container ID so the always() cleanup step can tear it down.
-          echo "DEV_CONTAINER_ID=${DEV_CONTAINER_ID}" >> "${GITHUB_ENV}"
-          sleep 10
-
-          devcontainer_exec()
-          {
-              docker exec "$DEV_CONTAINER_ID" "$@"
-          }
-
-          echo "Running fastdev in qemu in background, logging to qemu.log"
-          devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
-          devcontainer_exec bash -c \
-            "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
-
-          echo "Terminating fastdev"
-          devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
-
-          echo "Waiting for fastdev to power down"
-          max_tries=20
-          msg="Power down"
-          log="$WORKSPACE_ROOT/qemu.log"
-
-          for i in $(seq 1 "$max_tries"); do
-              if grep -q "${msg}" "${log}" 2>/dev/null; then
-                  echo "Waiting for \"$msg\" message in $log succeeded"
-                  rm -f "${log}"
-                  exit 0
-              fi
-              echo "Waiting for \"$msg\" message in $log ... ($i/$max_tries)"
-              sleep 1
-          done
-          echo "Error: Waiting for \"$msg\" message in $log timed out!"
-          cat "${log}"
-          exit 1
+        run: bash "${SCRIPTS_DIR}/qemu_smoke_test.sh"
 
       - name: Checkout repository for integration
         uses: actions/checkout@v4
@@ -241,43 +143,7 @@ jobs:
       - name: Integrate upstream workspace
         working-directory: integration-repo
         shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ ! -d "${WORKSPACE_ROOT}" ]]; then
-            echo "::error::WORKSPACE_ROOT '${WORKSPACE_ROOT}' does not exist."
-            exit 1
-          fi
-
-          # Remove all tracked and untracked content except the repository metadata
-          # and files that must remain in the integration repository. Add entries to
-          # this list when additional repository-owned content should be preserved.
-          preserve_paths=(
-            '.git'
-            '.github'
-            '.gitignore'
-            'CODE_OF_CONDUCT.md'
-            'README.md'
-          )
-
-          while IFS= read -r -d '' path; do
-            name="${path#./}"
-            preserve=false
-            for preserve_path in "${preserve_paths[@]}"; do
-              if [[ "${name}" == "${preserve_path}" ]]; then
-                preserve=true
-                break
-              fi
-            done
-
-            if [[ "${preserve}" != true ]]; then
-              rm -rf -- "${path}"
-            fi
-          done < <(find . -mindepth 1 -maxdepth 1 -print0)
-
-          # Copy the upstream workspace on top, preserving flags, mtimes, ownership.
-          # Ignore the "prebuilt" and "build" sub-folders.
-          rsync -a --exclude='prebuilt' --exclude='build' "${WORKSPACE_ROOT}/." .
+        run: bash "${SCRIPTS_DIR}/integrate_workspace.sh"
 
       - name: Commit integrated upstream workspace and push to integration branch
         working-directory: integration-repo
@@ -374,64 +240,7 @@ jobs:
 
       - name: Package release assets
         shell: bash
-        run: |
-          set -euo pipefail
-
-          pdf_src="${EXTRACT_ROOT}/eb_corbos_toolkit/doc/user_manual.pdf"
-          html_src="${EXTRACT_ROOT}/eb_corbos_toolkit/doc/html"
-          prebuilt_src="${WORKSPACE_ROOT}/prebuilt"
-
-          if [[ ! -f "${pdf_src}" ]]; then
-            echo "::error::Expected user manual PDF not found at ${pdf_src}."
-            exit 1
-          fi
-
-          if [[ ! -d "${html_src}" ]]; then
-            echo "::error::Expected HTML user manual directory not found at ${html_src}."
-            exit 1
-          fi
-
-          if [[ ! -d "${prebuilt_src}" ]]; then
-            echo "::error::Expected prebuilt directory not found at ${prebuilt_src}."
-            exit 1
-          fi
-
-          assets_dir="${TMP_WORK_DIR}/release-assets"
-          mkdir -p "${assets_dir}"
-
-          mv "${ARCHIVE_PATH}" "${assets_dir}/eb_corbos_toolkit.tar.gz"
-
-          cp "${pdf_src}" "${assets_dir}/user_manual.pdf"
-          tar -czf "${assets_dir}/user_manual_html.tar.gz" -C "${html_src}" .
-
-          # Per-target assets: one image archive (named after its .wic file), the
-          # SDK sysroot tarball and the SSH target key for every target directory.
-          for target_dir in "${prebuilt_src}"/*/; do
-            [[ -d "${target_dir}" ]] || continue
-
-            image_dir="${target_dir}image"
-            if [[ -d "${image_dir}" ]]; then
-              wic_file="$(find "${image_dir}" -maxdepth 1 -name '*.wic' -print -quit)"
-              if [[ -z "${wic_file}" ]]; then
-                echo "::error::No .wic file found in ${image_dir}."
-                exit 1
-              fi
-              image_base="$(basename "${wic_file}" .wic)"
-              tar -czf "${assets_dir}/${image_base}.tar.gz" -C "${image_dir}" .
-            fi
-
-            sdk_dir="${target_dir}sysroot"
-            if [[ -d "${sdk_dir}" ]]; then
-              find "${sdk_dir}" -maxdepth 1 -type f -exec cp {} "${assets_dir}/" \;
-            fi
-
-            key_dir="${target_dir}ssh_keys"
-            if [[ -d "${key_dir}" ]]; then
-              find "${key_dir}" -maxdepth 1 -type f -exec cp {} "${assets_dir}/" \;
-            fi
-          done
-
-          echo "RELEASE_ASSETS_DIR=${assets_dir}" >> "${GITHUB_ENV}"
+        run: bash "${SCRIPTS_DIR}/package_release_assets.sh"
 
       - name: Create or update draft release and upload assets
         working-directory: integration-repo
