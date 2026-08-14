@@ -369,8 +369,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          command -v zip >/dev/null || { echo "::error::zip is required but not installed."; exit 1; }
-
           pdf_src="${EXTRACT_ROOT}/eb_corbos_toolkit/doc/user_manual.pdf"
           html_src="${EXTRACT_ROOT}/eb_corbos_toolkit/doc/html"
           prebuilt_src="${WORKSPACE_ROOT}/prebuilt"
@@ -394,7 +392,7 @@ jobs:
           mkdir -p "${assets_dir}"
 
           cp "${pdf_src}" "${assets_dir}/user_manual.pdf"
-          ( cd "${html_src}" && zip -r "${assets_dir}/user_manual_html.zip" . )
+          tar -czf "${assets_dir}/user_manual_html.tgz" -C "${html_src}" .
 
           # Full prebuilt tree as a single archive.
           tar -czf "${assets_dir}/prebuilt.tgz" -C "${prebuilt_src}" .
