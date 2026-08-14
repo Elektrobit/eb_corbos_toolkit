@@ -26,7 +26,8 @@ env:
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
-  publish-user-guide:
+  execute-release-activities:
+    name: Execute Release Activities
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -41,7 +42,7 @@ jobs:
           command -v jq >/dev/null
           command -v tar >/dev/null
 
-      - name: Verify published release contains the user guide asset
+      - name: Verify published release contains the User's Manual asset
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -53,7 +54,7 @@ jobs:
 
           if ! release_json="$(gh release view "${tag}" \
               --repo "${GITHUB_REPOSITORY}" \
-              --json isDraft,assets 2>/dev/null)"; then
+              --json assets 2>/dev/null)"; then
             echo "::error::No release is associated with tag '${tag}'."
             exit 1
           fi
@@ -67,7 +68,7 @@ jobs:
 
           echo "Published release for tag '${tag}' contains '${USER_GUIDE_ASSET}'."
 
-      - name: Download and extract the user guide asset
+      - name: Download and extract the User's Manual asset
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -91,6 +92,6 @@ jobs:
         with:
           path: _site
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy User's Manual to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
