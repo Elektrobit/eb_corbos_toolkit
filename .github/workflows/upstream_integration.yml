@@ -86,20 +86,17 @@ jobs:
             .github/scripts
 
       - name: Download, unpack, and validate upstream delivery archive
-        shell: bash
-        run: bash "${SCRIPTS_DIR}/download_archive.sh"
+        run: "${SCRIPTS_DIR}/download_archive.sh"
 
       - name: Load container image archives into Docker
         shell: bash
         run: |
-          set -euo pipefail
           docker load -i "${DEVCONTAINER_ARCHIVE}"
           docker load -i "${BUILDCONTAINER_ARCHIVE}"
 
       - name: "Fix BitBake execution issue on Ubuntu 23.10+"
         shell: bash
         run: |
-          set -euo pipefail
           "${BITBAKE_EXECUTION_FIXER}" --yes
 
       - name: "Test: Run kas build using extracted run.sh"
@@ -143,8 +140,7 @@ jobs:
 
       - name: Integrate upstream workspace
         working-directory: integration-repo
-        shell: bash
-        run: bash "${SCRIPTS_DIR}/integrate_workspace.sh"
+        run: "${SCRIPTS_DIR}/integrate_workspace.sh"
 
       - name: Commit integrated upstream workspace and push to integration branch
         working-directory: integration-repo
