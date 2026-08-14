@@ -22,7 +22,7 @@ permissions:
   id-token: write     # required by the Pages deployment
 
 env:
-  USER_GUIDE_ASSET: user_guide.tar.gz
+  USER_GUIDE_ASSET: user_manual_html.tar.gz
   # Tag from the manual input when dispatched, otherwise the pushed tag.
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
