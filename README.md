@@ -8,22 +8,23 @@ You can explore this car software platform and develop applications, build image
 
 Detailed documentation, including setup instructions and a User's Manual, is available as part of the GitHub Release Assets.
 The [latest User's Manual](https://elektrobit.github.io/eb_corbos_toolkit/) is also available via GitHub Pages.
-Check the [Releases](../../releases) page and download any required asset from the latest release.
+Check the [GitHub Release](../../releases) page and download any required asset from the latest release.
 
 You have two options to start using the EB corbos Toolkit.
 
-### Start with self-contained delivery archive
+### Start with Self-Contained Delivery Archive
 
-- open user manual, follow the instructions from the start
-- the DELIVERY_TARBALL_URL is the url pointing to the `eb_corbos_toolkit.tar.gz` asset of the latest GitHub Relase.
-  You can use the stable "latest release" URL: `https://github.com/elektrobit/eb_corbos_toolkit/releases/latest/download/eb_corbos_toolkit.tar.gz`
+Open the User's Manual and follow the instructions from the start.
+The `DELIVERY_TARBALL_URL` [mentioned in the User's Manual](https://elektrobit.github.io/eb_corbos_toolkit/#_obtain_eb_corbos_toolkit) must be the URL pointing to the `eb_corbos_toolkit.tar.gz` Asset of the latest [GitHub Release](../../releases).
 
-### Start with GitHub repository
+### Start with GitHub Repository
 
-- clone the repository
-- open in vscode, re-open in devcontainer, ...
-- open user manual, follow the instructions starting with section "Rebuild and Run Target Image".
-  (the instructions "Obtain EB corbos Toolkit", "Enter Development Container", "Run Prebuilt Target Image" do only work with the self-contained delivery archive )
+Clone the repository and open it in a [devcontainer](https://containers.dev/)-capable IDE, e.g [Visual Studio Code](https://code.visualstudio.com/).
+Re-open it in the devcontainer.
+Open the [User's Manual](https://elektrobit.github.io/eb_corbos_toolkit/) and follow the instructions, starting with the section [Rebuild and Run Target Image](https://elektrobit.github.io/eb_corbos_toolkit/#_rebuild_and_run_target_image).
+
+> [!NOTE]
+> The instructions "Obtain EB corbos Toolkit", "Enter Development Container", and "Run Prebuilt Target Image" only work with the self-contained delivery archive.
 
 ## Reporting Issues
 
