@@ -52,12 +52,12 @@ devcontainer_exec() {
 }
 
 echo "Running fastdev in qemu in background, logging to qemu.log" >&2
-devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &"
+devcontainer_exec bash -c "./scripts/qemu.sh -t fastdev < /dev/null > qemu.log 2>&1 &" >&2
 devcontainer_exec bash -c \
-  "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1"
+  "log=/workspace/qemu.log; source /workspace/scripts/includes/common/common.inc; wait_for_ssh fastdev-qemuarm64 70 1" >&2
 
 echo "Terminating fastdev" >&2
-devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff || true
+devcontainer_exec ssh fastdev-qemuarm64 crinit-ctl poweroff >&2 || true
 
 echo "Waiting for fastdev to power down" >&2
 max_tries=20

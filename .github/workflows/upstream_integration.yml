@@ -121,7 +121,7 @@ jobs:
           bash "${SCRIPTS_DIR}/qemu_smoke_test.sh" \
             --workspace-root "${WORKSPACE_ROOT}" \
             --run-script "${RUN_SCRIPT}" \
-            >> "${GITHUB_ENV}"
+            | grep -E '^DEV_CONTAINER_ID=[0-9a-f]{64}$' >> "${GITHUB_ENV}"
 
       - name: Checkout repository for integration
         uses: actions/checkout@v4
