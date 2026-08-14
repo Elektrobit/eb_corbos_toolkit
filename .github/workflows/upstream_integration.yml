@@ -310,7 +310,7 @@ jobs:
             echo "pr_tag=${tag_prefix}${pr_number}" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Rewrite devcontainer image tag for PR
+      - name: Rewrite devcontainer image tag to pull request number
         id: rewrite-tag
         working-directory: integration-repo
         shell: bash
@@ -359,7 +359,7 @@ jobs:
           docker push "${DEVCONTAINER_IMAGE}:${new_tag}"
           docker push "${BUILDCONTAINER_IMAGE}:${new_tag}"
 
-      - name: Package assets
+      - name: Package release assets
         shell: bash
         run: |
           set -euo pipefail
@@ -420,7 +420,7 @@ jobs:
 
           echo "RELEASE_ASSETS_DIR=${assets_dir}" >> "${GITHUB_ENV}"
 
-      - name: Create or update draft release
+      - name: Create or update draft release and upload assets
         working-directory: integration-repo
         env:
           GH_TOKEN: ${{ github.token }}
