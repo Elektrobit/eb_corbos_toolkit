@@ -300,7 +300,7 @@ jobs:
           set -euo pipefail
 
           existing_pr="$(gh pr list --head "${INTEGRATION_BRANCH}" --base main --state open --json number --jq '.[0].number // empty')"
-          tag_prefix="pr-"
+          tag_prefix="v"
 
           if [[ -n "${existing_pr}" ]]; then
             echo "Pull request #${existing_pr} already exists for ${INTEGRATION_BRANCH} → main."
