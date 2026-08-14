@@ -152,8 +152,10 @@ jobs:
           git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit; working copy already matches upstream."
+            echo "INTEGRATION_COMMIT_CREATED=false" >> "${GITHUB_ENV}"
           else
             git commit -m "Integrate upstream version ${RELEASE_VERSION}"
+            echo "INTEGRATION_COMMIT_CREATED=true" >> "${GITHUB_ENV}"
             git push origin "HEAD:${INTEGRATION_BRANCH}"
           fi
 
@@ -205,10 +207,13 @@ jobs:
           git add "${devcontainer_json}" "${run_sh}"
           if git diff --cached --quiet; then
             echo "Tags already match; nothing to commit."
-          else
-            # Amend the previous commit to include the tag rewrite, so that the previous container tag is not left in the integration branch history.
+          elif [[ "${INTEGRATION_COMMIT_CREATED}" == "true" ]]; then
+            # Amend the integration commit only when this run created one.
             git commit --amend --no-edit
             git push --force-with-lease origin "HEAD:${INTEGRATION_BRANCH}"
+          else
+            git commit -m "Rewrite devcontainer image tag for PR"
+            git push origin "HEAD:${INTEGRATION_BRANCH}"
           fi
 
       - name: Update container tags and push to registry
