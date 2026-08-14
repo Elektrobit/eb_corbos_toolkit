@@ -1,0 +1,22 @@
+#
+# Copyright (c) Siemens AG, 2023
+#
+# Authors:
+#  Su Bao Cheng <baocheng.su@siemens.com>
+#
+# SPDX-License-Identifier: MIT
+#
+
+FTPM_DEV=/dev/tpmrm0
+
+# The backing storage device and/or the tee-supplicant can take some time to
+# be discovered, 30 seconds should be enough
+wait_sec=30
+until test $wait_sec -eq 0 || test -c "${FTPM_DEV}" ; do
+	wait_sec=$((wait_sec-1))
+	sleep 1
+done
+
+if ! test -c "${FTPM_DEV}"; then
+    panic "Can't discover the fTPM device ${FTPM_DEV}!"
+fi

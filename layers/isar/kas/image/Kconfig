@@ -1,0 +1,55 @@
+# This software is a part of ISAR.
+# Copyright (C) 2023 ilbers GmbH
+#
+# Authors:
+#  Uladzimir Bely <ubely@ilbers.de>
+
+menu "Image type selection"
+
+choice
+	prompt "Image type selection"
+	default IMAGE_BASE
+
+config IMAGE_BASE
+	bool "Base image"
+	help
+	  This is the basic Isar image with bare minimum of preinstalled packages.
+	  It's technically close do the mmdebstrapped system with packages
+	  required to boot up the system.
+
+config IMAGE_DEBUG
+	bool "Debug image"
+	help
+	  This image includes some tools preinstalled useful for debug.
+
+config IMAGE_CI
+	bool "CI image"
+	select PACKAGE_SSHD_REGEN_KEYS
+	select PACKAGE_ISAR_CI_SSH_SETUP
+	help
+	  This image includes is for running CI. Via isar-ci-ssh-setup recipe.
+	  It creates ci user with non-interactive ssh access to the board.
+
+config IMAGE_INSTALLER
+	bool "Installer image"
+	help
+	  This image contains a target image and scripts to install the target image on a device.
+
+endchoice
+
+config KAS_INCLUDE_IMAGE
+	string
+	default "kas/image/isar-image-base.yaml" if IMAGE_BASE
+	default "kas/image/isar-image-debug.yaml" if IMAGE_DEBUG
+	default "kas/image/isar-image-ci.yaml" if IMAGE_CI
+	default "kas/image/isar-image-installer.yaml" if IMAGE_INSTALLER
+
+if IMAGE_INSTALLER
+menu "Installer config"
+
+source "kas/installer/Kconfig"
+
+endmenu
+endif
+
+endmenu

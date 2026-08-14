@@ -1,0 +1,205 @@
+Release next
+
+Release v0.11
+
+ * Add Debian Trixie support
+ * Add Ubuntu 24.04 (Noble) support
+ * Add AMD64 and ARM64 Debian Sid targets
+ * Migrate riscv64 targets from Sid to Trixie
+ * Add separate AMD64 target with CIP kernel
+ * Add hybrid iso9660 image target
+ * Drop MIPS support for Debian Buster
+ * Add x86 PC target
+ * Add support for the BeaglePlay board
+ * Add installer image support
+ * Update BitBake version to 2.8.0 release
+ * Update OE-core libs to 5.0 LTS
+ * Update WIC to the revision a4e7334a4
+ * Update kas-container to version 4.7
+ * Update mainline kernel to 6.6.11
+ * Update linux-starfive kernel to 6.6
+ * Update Barebox to 2024.05.0
+ * Make cross-compilation to be default
+ * Add mmdebstrap rootfs generation support
+ * Add native bitbake fetcher for APT sources
+ * Add squashfs imagetype
+ * Add prebuilt containers install demo packages
+ * Add image customization package support
+ * Add variable feature lists support
+ * Add apt fetching rate limit ability
+ * Drop lazy and recursive unmounts in tasks
+ * Improve post-task and post-build mounts cleanup
+ * Speedup testsuite
+ * Rebuild and improve startvm scripts
+ * Migrate to newer debhelper-compat syntax
+ * Improve schroot config handling stability
+ * Improve custom kernel packages splitting
+ * Improve initramfs customization
+ * Improve debianize script
+ * Improve builds reproducibility and snapshot usage
+ * Improve working with internal repositories
+ * Multiple improvements in expand-on-first-boot
+
+Release v0.10
+
+ * Add Debian Bookworm targets for some machines
+ * Move RISC-V from Sid-Ports to regular Sid
+ * Allow cross-building of Debian Sid targets
+ * Update Debian Ports signing keys
+ * Drop Debian Stretch support
+ * Support Starfive-Vision2 RISC-V board
+ * Update BitBake version to 2.0.12 release
+ * Update libubootenv to 0.3.5
+ * Add recipes for optee ftpm, examples, client and TA devkit
+ * Buildchroot no longer used for package building, use sbuild instead
+ * Remove buildchroot
+ * Add support of derived sbuild chroots
+ * Imager migrate from buildchroot to schroot
+ * Update kas container version to use with Gitlab
+ * Add kas menu/build support
+ * Support passing custom arguments to CI scripts
+ * Clenup and update CI (less KFAIL cases)
+ * Rework multiconfigs and cleanup them from CI-related hacks
+ * Introduce meta-test layer for CI purposes
+ * Support script over SSH on qemu VMs or remote hardware in testsuite
+ * Add developers test
+ * Update Avocado framework and switch to the new runner
+ * Update distro list in startvm script
+ * Introduce getVars API for testsuite
+ * Fixes for HOST_ARCH and -native build
+ * Enable SRCPV support for AUTOREV
+ * Add support for rebuilding essential packages
+ * Add multiarch support, remove obsolete compat-arch override
+ * ZSTD support for image conversions
+ * Add efi signed boot support and machine config example for it
+ * Support resizing a btrfs with expand-on-first-boot
+ * Multiple changes to make builds closer to reproducible
+ * Individual WIC partitions are no longer automatically deployed
+ * Add option to control deploy of raw WIC partitions
+ * Populate base-apt from both DISTRO and HOST_DISTRO
+ * Multiple improvements in WIC plugins
+ * Improve sstate maintenance script
+ * Rework ccache support and update ccache testcase
+ * Support build of packages with epoch version
+ * Move from deprecated WIC_IMAGER_INSTALL to IMAGER_INSTALL:wic
+ * Improve debianization script
+ * Add support for non-default modules dir in linux-module
+ * Split isar-apt and base-apt cleanup
+ * Fix and improve handling of multiple apt sources per package
+ * Update libhello and hello-isar recipes
+
+Release v0.9
+
+ * Add linux-phy kernel recipe
+ * Add Barebox building support
+ * Drop separate tgz and cpiogz multiconfigs
+ * Update BitBake version to 1.50.5 release
+ * Update WIC to the revision b8878cf0d
+ * Refactored and reorganized testsuite
+ * Add sstate test case
+ * Add sstate maintenance script
+ * Improve sstate cacheability
+ * Improve builds reproducibility
+ * Improve templates handling
+ * Improve expand-on-first-boot package
+ * Minimize shell environment usage
+ * Add quality check helper to image class
+ * Improve build errors handling
+ * Add flag to force password change on first login
+ * Use bullseye as default distro in startvm
+ * Move kernel cfg fragments handling to debian/rules
+ * Set stable kas container version
+ * Add support for debian build profiles and options
+ * Disable cache-deb-src for Sid-Ports
+ * Add support for devicemapper
+ * Rebuild image generation logic
+ * Refactoring SDK creation
+ * Improve wks configuration fields
+ * Migrate Raspberry targets to WIC
+ * Add wks to split rootfs across partitions
+ * Introduce template support for imagetypes
+ * Refactoring UBI/UBIFS support
+ * Add EFI+PCBIOS wks configuration
+ * Update debian ports signing key
+ * Update documentation
+ * Deprecate ubi-ubifs-img bbclass
+ * Deprecate rpi-sdimg bbclass
+ * Remove isar-image
+
+Release v0.8
+
+ * Add Debian Sid Ports support
+ * Add Debian Bookworm support
+ * Add Debian Bullseye support
+ * Drop Debian Jessie support
+ * Add Ubuntu Focal support
+ * Add Raspberry Pi OS support
+ * Add RISC-V architecture support
+ * Add MIPSel architecture support
+ * Add STM32MP15x eval board target
+ * Add NanoPi NEO board target
+ * Add HiFive Unleashed board target
+ * Add qemuriscv64 virtual target
+ * Add iMX6 SabreLite target
+ * Add Raspberry Pi 1B, 1B+, 2B, 3 targets
+ * Update BitBake version to 1.46.2 release
+ * Update WIC to the revision b85a09ea4
+ * Update U-Boot version to 2020.10
+ * Update linux-mainline version to 5.4.70
+ * Migrate CI to Avocado Framework
+ * Split CI on fast and full builds
+ * Add Sstate (Shared State) Cache support
+ * Add Ccache support
+ * Add deb-src caching support
+ * Add UEFI boot with systemd-boot
+ * Add CPIO image type (initramfs like filesystem) generation support
+ * Add VMWare/Virtualbox image generation support
+ * Add containerized filesystem and sdk generation support
+ * Add initramfs generation support
+ * Add multiple image types support
+ * Add Linux Kernel Selftests recipe
+ * Add prebuilt debs injecting support
+ * Add devshell and devshell_nodep targets
+ * Add git-buildpackage support
+ * Add buildstats generation and pybootchartgui
+ * Force running GPG-agent on demand
+ * Allow clear-text passwords for users
+ * Add compat architecture support via multiarch
+ * Add image versioning
+ * Add build dependencies defining support for debianization
+ * Add multiple DTBs deploying support
+ * Add BB_NO_NETWORK option
+ * Migrate to deb.debian.org in apt sources.list
+ * Add AUTOREV support for SRCREV
+ * Add support for patches in sub-directories
+ * Add rootfs postprocessing
+ * Allow downgrades when installing packages
+ * Deprecate isar-image
+
+Release v0.7
+
+ * Improved CI scripts
+ * Added setting of root (encrypted) password
+ * Added support for UBI file system images
+ * Added support of "apt://" in SRC_URI to fetch/unpack/rebuild an upstream package
+ * Renamed example-hello to hello-isar to avoid collisions with Debian hello
+ * Moved debian distro conf files from meta-isar to meta
+ * Added support of tar.gz images
+ * Debian "raw" packages are built using the whole dpkg-buildpackage workflow
+ * Supported host system >= stretch
+ * bitbake updated to the 19dee675
+ * Added LeMaker HiKey board support
+ * Added Terasic DE0-Nano-SoC support
+ * Added option to create local apt repo caching upstream Debian packages
+
+Release v0.6
+
+ * Migration to deboostrap from multistrap as later is deprecated
+ * WIC support is integrated
+ * Added cross compilation support
+ * Added SDK root filesystem creation
+ * Added Debian buster support
+ * Dropped wheezy support
+ * Added Banana Pi support
+
+Release v0.5
