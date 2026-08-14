@@ -47,15 +47,15 @@ jobs:
     timeout-minutes: 120
     env:
       SCRIPTS_DIR: ${{ github.workspace }}/.github/scripts
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
 
     steps:
       - name: Authorize triggering actor
         env:
           ALLOWED_ACTORS: ${{ vars.WORKFLOW_ALLOWED_ACTORS }}
-        shell: bash
         run: |
-          set -euo pipefail
-
           if [[ -z "${ALLOWED_ACTORS:-}" ]]; then
             echo "::error::Repository variable WORKFLOW_ALLOWED_ACTORS is not set."
             echo "::error::Set it to a comma-separated list of GitHub usernames allowed to run this workflow."
@@ -71,9 +71,7 @@ jobs:
           echo "Actor authorization succeeded."
 
       - name: Verify runner prerequisites
-        shell: bash
         run: |
-          set -euo pipefail
           command -v curl >/dev/null
           command -v tar >/dev/null
           command -v docker >/dev/null
@@ -86,9 +84,7 @@ jobs:
             .github/scripts
 
       - name: Download, unpack, and validate upstream delivery archive
-        shell: bash
         run: |
-          set -euo pipefail
           echo "::add-mask::${{ inputs.artifact_url }}"
           echo "::add-mask::${{ inputs.artifactory_token }}"
           "${SCRIPTS_DIR}/download_archive.sh" \
@@ -97,27 +93,21 @@ jobs:
             >> "${GITHUB_ENV}"
 
       - name: Load container image archives into Docker
-        shell: bash
         run: |
           docker load -i "${DEVCONTAINER_ARCHIVE}"
           docker load -i "${BUILDCONTAINER_ARCHIVE}"
 
       - name: "Fix BitBake execution issue on Ubuntu 23.10+"
-        shell: bash
         run: |
           "${BITBAKE_EXECUTION_FIXER}" --yes
 
       - name: "Test: Run kas build using extracted run.sh"
-        shell: bash
         run: |
-          set -euo pipefail
           cd "${WORKSPACE_ROOT}"
           "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
 
       - name: "Test: Boot fastdev image in QEMU"
-        shell: bash
         run: |
-          set -euo pipefail
           bash "${SCRIPTS_DIR}/qemu_smoke_test.sh" \
             --workspace-root "${WORKSPACE_ROOT}" \
             --run-script "${RUN_SCRIPT}" \
@@ -132,10 +122,7 @@ jobs:
 
       - name: Create or checkout integration branch
         working-directory: integration-repo
-        shell: bash
         run: |
-          set -euo pipefail
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -153,9 +140,7 @@ jobs:
 
       - name: Integrate upstream workspace
         working-directory: integration-repo
-        shell: bash
         run: |
-          set -euo pipefail
           "${SCRIPTS_DIR}/integrate_workspace.sh" \
             --workspace-root "${WORKSPACE_ROOT}"
 
@@ -163,10 +148,7 @@ jobs:
         working-directory: integration-repo
         env:
           RELEASE_VERSION: ${{ inputs.release_version }}
-        shell: bash
         run: |
-          set -euo pipefail
-
           git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit; working copy already matches upstream."
@@ -182,10 +164,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ inputs.release_version }}
-        shell: bash
         run: |
-          set -euo pipefail
-
           existing_pr="$(gh pr list --head "${INTEGRATION_BRANCH}" --base main --state open --json number --jq '.[0].number // empty')"
           tag_prefix="v"
 
@@ -206,10 +185,7 @@ jobs:
       - name: Rewrite devcontainer image tag to pull request number
         id: rewrite-tag
         working-directory: integration-repo
-        shell: bash
         run: |
-          set -euo pipefail
-
           devcontainer_json=".devcontainer/devcontainer.json"
           run_sh="./scripts/run.sh"
           rfi_tag="$(sed -n 's/.*"image":.*:\([^"]*\)".*/\1/p' "${devcontainer_json}" | head -1)"
@@ -233,15 +209,12 @@ jobs:
           else
             # Amend the previous commit to include the tag rewrite, so that the previous container tag is not left in the integration branch history.
             git commit --amend --no-edit
-            git push --force origin "HEAD:${INTEGRATION_BRANCH}"
+            git push --force-with-lease origin "HEAD:${INTEGRATION_BRANCH}"
           fi
 
       - name: Update container tags and push to registry
         working-directory: integration-repo
-        shell: bash
         run: |
-          set -euo pipefail
-
           echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
           new_tag="${{ steps.integration-pr.outputs.pr_tag }}"
@@ -253,9 +226,7 @@ jobs:
           docker push "${BUILDCONTAINER_IMAGE}:${new_tag}"
 
       - name: Package release assets
-        shell: bash
         run: |
-          set -euo pipefail
           bash "${SCRIPTS_DIR}/package_release_assets.sh" \
             --tmp-work-dir "${TMP_WORK_DIR}" \
             --archive-path "${ARCHIVE_PATH}" \
@@ -269,10 +240,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ inputs.release_version }}
-        shell: bash
         run: |
-          set -euo pipefail
-
           shopt -s nullglob
           assets=( "${RELEASE_ASSETS_DIR}"/* )
           shopt -u nullglob
@@ -302,7 +270,6 @@ jobs:
 
       - name: Clean up runner resources
         if: always()
-        shell: bash
         run: |
           set +e
 

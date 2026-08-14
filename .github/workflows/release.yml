@@ -43,12 +43,13 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
 
     steps:
       - name: Verify runner prerequisites
-        shell: bash
         run: |
-          set -euo pipefail
           command -v gh >/dev/null
           command -v jq >/dev/null
           command -v tar >/dev/null
@@ -56,10 +57,7 @@ jobs:
       - name: Verify published release contains the User's Manual asset
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          set -euo pipefail
-
           tag="${RELEASE_TAG}"
           echo "Checking release for tag '${tag}'."
 
@@ -82,10 +80,7 @@ jobs:
       - name: Download and extract the User's Manual asset
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          set -euo pipefail
-
           tag="${RELEASE_TAG}"
           tmp_dir="$(mktemp -d)"
 
