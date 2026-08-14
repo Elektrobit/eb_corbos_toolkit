@@ -13,8 +13,8 @@ source ${SH_DIR}/includes/common/common.inc
 
 # Default values
 DEF_CONTAINER_ENGINE="docker"
-DEF_BUILD_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64:RFI_v2.0.0-beta2"
-DEF_DEV_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:RFI_v2.0.0-beta2"
+DEF_BUILD_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64:v10"
+DEF_DEV_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v10"
 DEF_CONTAINER_USER="developer"
 DEF_WORKSPACE_DIR=$(realpath ${SH_DIR}/..)
 
