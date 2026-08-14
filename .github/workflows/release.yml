@@ -51,6 +51,13 @@ jobs:
           tag="${RELEASE_TAG}"
           echo "Checking release for tag '${tag}'."
 
+          if ! release_json="$(gh release view "${tag}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --json isDraft,assets 2>/dev/null)"; then
+            echo "::error::No release is associated with tag '${tag}'."
+            exit 1
+          fi
+
           has_asset="$(jq -r --arg a "${USER_GUIDE_ASSET}" \
             '[.assets[].name] | index($a) != null' <<<"${release_json}")"
           if [[ "${has_asset}" != "true" ]]; then
