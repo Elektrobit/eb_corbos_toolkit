@@ -1,0 +1,12 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - "includes/public.yml"
+
+# Must be top-level. Cannot use quotes for the value here
+build_system: isar
+
+target:
+  - "fastdev"

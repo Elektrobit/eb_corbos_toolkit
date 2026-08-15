@@ -1,0 +1,152 @@
+# This software is a part of ISAR.
+# Copyright (C) Siemens AG, 2025
+#
+# SPDX-License-Identifier: MIT
+
+config KAS_INCLUDE_IMAGE
+	string
+	default "kas/image/isar-image-installer.yaml"
+
+comment "Images to bundle"
+
+config BUNDLE_IMAGE_BASE
+	bool "Base image"
+	default y
+	help
+	  Embed the basic Isar image into the installer image.
+
+config BUNDLE_IMAGE_CI
+	bool "CI image"
+	help
+	  Embed the Isar CI image into the installer image.
+
+config BUNDLE_IMAGE_DEBUG
+	bool "Debug image"
+	help
+	  Embed the Isar debug image into the installer image.
+
+comment "No installer payload. Copy image(s) manually to the INSTALLDATA partition"
+	depends on !BUNDLE_IMAGE_BASE && !BUNDLE_IMAGE_CI && !BUNDLE_IMAGE_DEBUG
+
+config INSTALL_UNATTENDED
+	bool "Run installer unattended"
+	depends on BUNDLE_IMAGE_BASE || BUNDLE_IMAGE_CI || BUNDLE_IMAGE_DEBUG
+
+config INSTALLER_TARGET_IMAGE_BASE
+	string
+	default "isar-image-base" if BUNDLE_IMAGE_BASE
+
+config INSTALLER_TARGET_IMAGE_CI
+	string
+	default "isar-image-ci" if BUNDLE_IMAGE_CI
+
+config INSTALLER_TARGET_IMAGE_DEBUG
+	string
+	default "isar-image-debug" if BUNDLE_IMAGE_DEBUG
+
+if INSTALL_UNATTENDED
+
+config KAS_INCLUDE_INSTALLER_UNATTENDED
+	string
+	default "kas/installer/unattended.yaml"
+
+config INSTALLER_UNATTENDED
+	string
+	default "1" if INSTALL_UNATTENDED
+	default ""
+
+choice
+	prompt "Image to install unattended"
+
+config INSTALL_IMAGE_BASE
+	bool "Base image"
+	depends on BUNDLE_IMAGE_BASE
+	help
+	  Install the basic Isar image in unattended mode.
+
+config INSTALL_IMAGE_CI
+	bool "CI image"
+	depends on BUNDLE_IMAGE_CI
+	help
+	  Install the Isar CI image in unattended mode.
+
+config INSTALL_IMAGE_DEBUG
+	bool "Debug image"
+	depends on BUNDLE_IMAGE_DEBUG
+	help
+	  Install the Isar debug image in unattended mode.
+
+endchoice
+
+config INSTALLER_TARGET_IMAGE
+	string
+	default "isar-image-base" if INSTALL_IMAGE_BASE
+	default "isar-image-ci" if INSTALL_IMAGE_CI
+	default "isar-image-debug" if INSTALL_IMAGE_DEBUG
+
+
+config INSTALLER_TARGET_DEVICE
+	string "Target device to deploy"
+	default "/dev/sda"
+	help
+          Deploy image to this target device. Accepts comma/colon-separated multiple devices; installs on the first available.
+	  Leave this empty to get prompted during installation
+	  Examples: /dev/sda, /dev/nvme0n1, /dev/sda:/dev/nvme0n1
+
+choice
+	prompt "Overwrite handling"
+	default OPT_INSTALLER_TARGET_OVERWRITE
+
+config OPT_INSTALLER_TARGET_OVERWRITE
+	bool "Overwrite if target is not empty"
+
+config OPT_INSTALLER_TARGET_ABORT
+	bool "Abort if target is not empty"
+
+endchoice
+
+config INSTALLER_TARGET_OVERWRITE
+	string
+	default "OVERWRITE" if OPT_INSTALLER_TARGET_OVERWRITE
+	default "ABORT" if OPT_INSTALLER_TARGET_ABORT
+
+config OPT_INSTALLER_UNATTENDED_ABORT_ENABLE
+	bool "Allow aborting unattended installation"
+	help
+	  Allow users to abort unattended installation before it starts by
+	  pressing a key during a configurable timeout, switching to normal
+	  installation mode.
+
+config INSTALLER_UNATTENDED_ABORT_ENABLE
+	string
+	default "1" if OPT_INSTALLER_UNATTENDED_ABORT_ENABLE
+
+config INSTALLER_UNATTENDED_ABORT_TIMEOUT
+	string "Unattended abort timeout (seconds)"
+	depends on OPT_INSTALLER_UNATTENDED_ABORT_ENABLE
+	default "5"
+	help
+	  Set the number of seconds users have to press a key to abort
+	  unattended installation and switch to normal installation mode.
+
+endif
+
+config INSTALLER_ADD_DEVICE_INFO_COLLECTOR
+        bool "Add Device Info Collector"
+        default n
+
+config KAS_INCLUDE_INSTALLER_ADD_DEVICE_INFO_COLLECTOR
+	string
+	default "kas/installer/add-device-info-collector.yaml"
+    depends on INSTALLER_ADD_DEVICE_INFO_COLLECTOR
+
+config TARGET_BOOTSTRAPPER_TTY_SERVICES
+	string "TTY Service to use"
+	default "getty@tty1 serial-getty@ttyS0" if !INSTALL_UNATTENDED
+	default "serial-getty@ttyS0" if INSTALL_UNATTENDED
+	help
+          TTY Service(s) used to execute the installer on.
+	  In case of unattended installers, make sure only one tty
+	  is specified here, else race condition between installer
+	  instances may occur.
+	  Examples: "serial-getty@ttyS0", "getty@tty1" or combinations like "getty@tty1 serial-getty@ttyS0"

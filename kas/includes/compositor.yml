@@ -1,0 +1,10 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - graphics.yml
+
+local_conf_header:
+  compositor: |
+    EBCLFSA_DISTRO_FEATURES:append = " compositor"

@@ -1,0 +1,16 @@
+# loads the event log scanner (elos)
+NAME = elosd
+
+COMMAND = /bin/mkdir -p /run/elos
+          /usr/bin/elosd
+
+DEPENDS = @provided:fstab @provided:tmpdir @provided:machine-id @provided:network
+
+PROVIDES = elos:spawn syslog:spawn
+
+RESPAWN = YES
+RESPAWN_RETRIES = 3
+
+USER = elos
+GROUP = elos
+CAPABILITY_SET = CAP_SYSLOG CAP_DAC_OVERRIDE
