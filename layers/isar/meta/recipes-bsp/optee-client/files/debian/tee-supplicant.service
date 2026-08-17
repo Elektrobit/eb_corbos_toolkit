@@ -1,0 +1,20 @@
+# This software is a part of ISAR.
+# Copyright (c) Siemens AG, 2023
+#
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=TEE Supplicant
+DefaultDependencies=no
+Before=systemd-remount-fs.service shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Start if not already started by the initramfs hook
+ExecStart=/bin/sh -c '/usr/bin/pgrep tee-supplicant >/dev/null || /usr/sbin/tee-supplicant -d'
+ExecStop=/bin/sh -c 'for dev in /sys/bus/tee/devices/*; do case "$dev" in *optee-ta-*) basename "$dev" > "$dev"/driver/unbind;; esac done'
+ExecStop=/usr/bin/pkill tee-supplicant
+
+[Install]
+WantedBy=sysinit.target

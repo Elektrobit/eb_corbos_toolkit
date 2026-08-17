@@ -1,0 +1,22 @@
+config device
+    option name     lo
+    option ipv6     0
+
+config interface loopback
+    option device	lo
+    option proto	static
+    option ipaddr	127.0.0.1
+    option netmask	255.0.0.0
+
+config device
+    option type  bridge
+    option name  ${NETIFD_MAIN_DEVICE}
+${NETIFD_BRIDGE_PORTS_LIST}
+    option ipv6  0
+
+config interface lan
+    option device   ${NETIFD_MAIN_DEVICE}
+    option proto    static
+    option ipaddr   ${NETIFD_IPADDR}
+    option gateway  ${NETIFD_GATEWAY}
+${NETIFD_DNS_LIST}

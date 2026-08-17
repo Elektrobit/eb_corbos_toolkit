@@ -1,0 +1,32 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - "kas/includes/isar.yml"
+
+distro: "trixie-ebclfsa"
+machine: "ebcl-qemuarm64"
+
+defaults:
+  repos:
+    branch: "main"
+
+repos:
+  meta-ebclfsa:
+    path: "layers/meta-ebclfsa"
+    layers:
+      .:
+
+  meta-generated:
+    path: "layers/meta-generated"
+    layers:
+      .:
+
+local_conf_header:
+  increase_wget_retries: |
+    # Run wget multiple times as it seems that using the -t retry option does not work with bitbake
+    FETCHCMD_wget = "/usr/bin/env sh -c 'for i in \$\(seq 1 5\); do wget -t 1 -T 30 $@ && exit 0; sleep 1; done; exit 1' -- "
+  disable_toolchain_wrapper: |
+    # Disable the gcc sysroot wrapper in the SDK to use the toolchain as-is
+    DISABLE_TOOLCHAIN_WRAPPER = "1"
