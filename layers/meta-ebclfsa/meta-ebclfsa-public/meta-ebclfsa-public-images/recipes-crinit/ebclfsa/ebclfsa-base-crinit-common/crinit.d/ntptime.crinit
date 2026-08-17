@@ -1,0 +1,7 @@
+NAME = ntptime
+
+COMMAND = /bin/sh -c "while ! ping -c 1 google.de 1>/dev/null 2>&1; do sleep 1; done; ntpdate -s time.nist.gov"
+
+PROVIDES = ntptime:wait
+DEPENDS = @provided:network
+RESPAWN = NO

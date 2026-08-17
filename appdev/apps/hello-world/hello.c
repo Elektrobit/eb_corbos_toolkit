@@ -1,5 +1,4 @@
-/// Copyright 2025 Elektrobit Automotive GmbH
-/// All rights reserved
+// Copyright 2025 Elektrobit. All rights reserved.
 
 #include <stdio.h>
 #include <unistd.h>
@@ -13,7 +12,7 @@ int main() {
   printf("Hello world!\n");
 
   for(i=0; i < NR_RUNS; i++) {
-    sleep(1);
+    sleep(SLEEP);
     printf("Hello again #%u!\n", i);
   }
   

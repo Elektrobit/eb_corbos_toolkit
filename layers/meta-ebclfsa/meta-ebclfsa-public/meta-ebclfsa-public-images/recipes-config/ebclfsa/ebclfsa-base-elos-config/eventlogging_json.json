@@ -1,0 +1,19 @@
+{
+  "root": {
+    "elos": {
+      "EventLogging": {
+        "Plugins": {
+          "JsonBackend": {
+            "Config": {
+              "StoragePath": "/data/elosd_%host%_%date%_%count%.log",
+              "MaxSize": 60000,
+              "Flags": [
+                "O_SYNC"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

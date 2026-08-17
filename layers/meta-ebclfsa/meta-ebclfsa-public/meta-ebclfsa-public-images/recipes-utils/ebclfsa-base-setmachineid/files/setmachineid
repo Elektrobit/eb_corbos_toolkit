@@ -1,0 +1,70 @@
+#!/bin/sh
+
+set -e
+
+gen_machine_id_raspi() {
+    if [ -e /sys/firmware/devicetree/base/serial-number ]; then
+        cat /sys/firmware/devicetree/base/serial-number > /etc/machine-id
+        return 0
+    else
+        return 1
+    fi
+}
+
+gen_machine_id_crinit() {
+    machine-id-gen    
+}
+
+gen_machine_id_mac() {
+    if [ "$(ls "/sys/class/net")" ]; then
+        cat /sys/class/net/*/address | head -n1 | tr -d ':\n' > /etc/machine-id
+        return 0
+    else
+        return 1
+    fi
+}
+
+gen_machine_id_random() {
+    uuid > /etc/machine-id
+}
+
+# If /etc/machine-id is already present, not empty and not
+# in uninitialized state; don't overwrite it.
+if [ -s /etc/machine-id ]; then
+    read -r id < /etc/machine-id
+    if [ ! "$id" = "uninitialized" ];then
+        exit 0
+    fi
+fi
+
+# For read-only filesystems, in the future we should check if /etc/machine-id is writable already.
+touch /run/machine-id
+mount --bind /run/machine-id /etc/machine-id
+
+# If the crinit example program for machine ID generation is installed...
+if command -v machine-id-gen > /dev/null; then
+    # use it if we have either been given a machine_id on the kernel command line
+    if grep "systemd.machine_id" /proc/cmdline > /dev/null; then
+        gen_machine_id_crinit
+        exit 0
+    fi
+
+    # or if we're running on an actual S32G with /dev/mem present
+    if [ -e "/dev/mem" ] && grep "S32G" /sys/firmware/devicetree/base/model > /dev/null; then
+        gen_machine_id_crinit
+        exit 0
+    fi
+fi
+
+# If we're on a raspi, use its serial number from sysfs
+if gen_machine_id_raspi; then
+    exit 0
+fi
+
+# If that did not work fall back on the first MAC address.
+if gen_machine_id_mac; then
+    exit 0
+fi
+
+# If all else failed, use a random uuid
+gen_machine_id_random
