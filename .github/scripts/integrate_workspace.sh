@@ -54,5 +54,11 @@ while IFS= read -r -d '' path; do
 done < <(find . -mindepth 1 -maxdepth 1 -print0)
 
 # Copy the upstream workspace on top, preserving flags, mtimes, ownership.
-# Ignore the "prebuilt" and "build" sub-folders.
-rsync -a --exclude='prebuilt' --exclude='build' "${workspace_root}/." .
+# Ignore the "prebuilt" and "build" sub-folders as well as everything that is
+# preserved in the integration repository.
+rsync_excludes=(--exclude='prebuilt' --exclude='build')
+for preserve_path in "${preserve_paths[@]}"; do
+  rsync_excludes+=(--exclude="/${preserve_path}")
+done
+
+rsync -a "${rsync_excludes[@]}" "${workspace_root}/." .
