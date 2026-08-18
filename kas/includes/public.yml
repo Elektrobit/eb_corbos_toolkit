@@ -1,0 +1,21 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - "kas/includes/common-config.yml"
+
+repos:
+  meta-ebclfsa:
+    layers:
+      meta-ebclfsa-public:
+      meta-ebclfsa-public/meta-ebclfsa-public-bsp:
+      meta-ebclfsa-public/meta-ebclfsa-public-images:
+
+  meta-generated:
+    layers:
+      meta-generated-public:
+      meta-generated-public/meta-upstream-public-packages:
+      meta-generated-public/meta-ebclfsa-public-packages:
+      meta-generated-public/meta-third-party-public-packages:
+      meta-generated-public/meta-third-party-rebuilt-public-packages:

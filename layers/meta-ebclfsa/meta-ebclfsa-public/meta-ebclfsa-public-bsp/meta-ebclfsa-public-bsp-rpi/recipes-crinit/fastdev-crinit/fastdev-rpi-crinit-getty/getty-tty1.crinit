@@ -1,0 +1,7 @@
+NAME = getty-tty1
+
+COMMAND = /usr/bin/setsid /sbin/getty --autologin root tty1
+
+RESPAWN = YES
+DEPENDS = ""
+RESPAWN_RETRIES = 3

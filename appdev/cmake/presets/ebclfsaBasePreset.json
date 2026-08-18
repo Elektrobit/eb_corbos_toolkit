@@ -11,8 +11,9 @@
             "generator": "Unix Makefiles",
             "environment": {
                 "DESTDIR": "${sourceDir}/build/${presetName}/install",
-                "SYSROOT_BASE":"/workspace/sysroots",
-                "TOOLCHAIN_BASE": "${sourceDir}/../../cmake/toolchain"
+                "SYSROOT_BASE": "/workspace/sysroots",
+                "TOOLCHAIN_BASE": "${sourceDir}/../../cmake/toolchain",
+                "LD_LIBRARY_PATH": "$env{SYSROOT}/usr/lib/x86_64-linux-gnu:$penv{LD_LIBRARY_PATH}"
             },
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
@@ -23,6 +24,18 @@
                 "CMAKE_BUILD_TYPE": {
                     "type": "STRING",
                     "value": "Debug"
+                },
+                "CMAKE_CXX_FLAGS_DEBUG": {
+                    "type": "STRING",
+                    "value": "-g3 -O0"
+                },
+                "CMAKE_C_FLAGS_DEBUG": {
+                    "type": "STRING",
+                    "value": "-g3 -O0"
+                },
+                "GDB_PORT": {
+                    "type": "STRING",
+                    "value": "3333"
                 }
             }
         }
@@ -32,7 +45,7 @@
             "name": "base",
             "hidden": true,
             "jobs": 8,
-            "targets" : [
+            "targets": [
                 "install"
             ]
         }

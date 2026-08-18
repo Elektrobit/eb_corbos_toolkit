@@ -1,0 +1,18 @@
+# Shall only be used in dev image variants
+# This repository configuration may cause changes to your system due to updated packages.
+# WARNING: THE FOLLOWING MODIFICATION IS AT YOUR OWN RISK AND NOT SUPPORTED BY THE VENDOR IN ANY WAY.
+# If you still want to use this configuration, change "Enabled: no" to
+# "Enabled: yes" or remove the "Enabled: no" line.
+Types: deb
+URIs: https://deb.debian.org/debian
+Suites: trixie trixie-updates trixie-backports
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+Enabled: no
+
+Types: deb
+URIs: https://deb.debian.org/debian-security
+Suites: trixie-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+Enabled: no
