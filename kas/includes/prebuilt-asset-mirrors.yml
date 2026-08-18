@@ -1,0 +1,9 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+
+local_conf_header:
+  prebuilt_assets_mirrors: |
+    USER_PROVIDED_LINUX_LOCATION = "http://localhost:8000/external"
+    REPO_EBCLFSA_CORE = "http://localhost:8000/repos/ebclfsa-core"

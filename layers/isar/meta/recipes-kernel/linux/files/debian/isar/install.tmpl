@@ -1,0 +1,274 @@
+#!/bin/bash
+# Copyright (c) Mentor Graphics, a Siemens business, 2019
+# SPDX-License-Identifier: MIT
+
+# Load common stuff
+. ${S}/debian/isar/common
+
+get_kernel_arch() {
+    case "${1}" in
+        amd64|i386) echo "x86";;
+        arm64) echo "arm64";;
+        armhf) echo "arm";;
+        mipsel) echo "mips";;
+        riscv64) echo "riscv";;
+    esac
+}
+
+do_install() {
+
+    # check if our kernel was configured
+    if [ ! -f "${O}/.config" ]; then
+        echo "error: kernel not configured!" >&2
+        return 1
+    fi
+
+    # load its configuration
+    . ${O}/.config
+
+    kimage="$(${MAKE} O=${O} -s --no-print-directory image_name)"
+    # ARM/ARM64 kernels < 4.12 do not include the path to the kernel
+    if [ ! -e ${O}/${kimage} ]; then
+        kimage="arch/${ARCH}/boot/${kimage}"
+    fi
+    krel="$(${MAKE} O=${O} -s --no-print-directory kernelrelease)"
+    case "${ARCH}" in
+        mips|powerpc|riscv|arm64) kimage_path="boot/vmlinux-${krel}"    ;;
+                              um) kimage_path="usr/bin/vmlinux-${krel}" ;;
+                               *) kimage_path="boot/vmlinuz-${krel}"    ;;
+    esac
+
+    print_settings
+
+    # Trace what we do here
+    set -x
+
+    if echo "${DEB_BUILD_PROFILES}" | grep -q "kbuild"; then
+        # Install kernel scripts and tools
+        if echo "${DEB_BUILD_PROFILES}" | grep -q "cross"; then
+            install_kbuild ${deb_kern_kbuild_cross_dir}
+        else
+            install_kbuild ${deb_kern_kbuild_dir}
+        fi
+    fi
+
+    if echo "${DEB_BUILD_PROFILES}" | grep -q "kernel"; then
+        if echo "${DEB_BUILD_PROFILES}" | grep -q "cross"; then
+            # Install cross kernel scripts and tools
+            install_kbuild ${deb_kern_kbuild_dir}-${HOST_ARCH}-cross
+        fi
+
+        # Run the install steps
+        install_image
+        if [ "${ARCH}" != "um" ]; then
+            install_config
+            install_map
+        fi
+        install_hooks
+        install_dtbs
+        install_kmods
+        install_headers
+    fi
+
+    # Stop tracing
+    set +x
+}
+
+print_settings() {
+    cat <<EOF
+Install settings:
+-----------------
+kimage=${kimage}
+kimage_path=${kimage_path}
+
+EOF
+}
+
+install_image() {
+    install -m 755 -d ${deb_img_dir}/$(dirname ${kimage_path})
+    install -m 644 ${O}/${kimage} ${deb_img_dir}/${kimage_path}
+
+    # Make sure arm64 and riscv kernels are decompressed
+    if [ "${ARCH}" = "arm64" -o "${ARCH}" = "riscv" ]; then
+        mv ${deb_img_dir}/${kimage_path} ${deb_img_dir}/${kimage_path}.gz
+        gunzip -f ${deb_img_dir}/${kimage_path}.gz
+    fi
+
+    install_image_debug
+}
+
+install_config() {
+    install -m 644 ${O}/.config ${deb_img_dir}/$(dirname ${kimage_path})/config-${krel}
+}
+
+install_map() {
+    install -m 644 ${O}/System.map ${deb_img_dir}/$(dirname ${kimage_path})/System.map-${krel}
+}
+
+install_image_debug() {
+    # Different tools want the image in different locations
+    # perf
+    mkdir -p ${deb_dbg_dir}/usr/lib/debug/lib/modules/${krel}/
+    install -m 644 ${O}/vmlinux ${deb_dbg_dir}/usr/lib/debug/lib/modules/${krel}/
+    # systemtap
+    mkdir -p ${deb_dbg_dir}/usr/lib/debug/boot/
+    ln -s ../lib/modules/$version/vmlinux ${deb_dbg_dir}/usr/lib/debug/boot/vmlinux-${krel}
+    # kdump-tools
+    ln -s lib/modules/${krel}/vmlinux ${deb_dbg_dir}/usr/lib/debug/vmlinux-${krel}
+}
+
+install_hooks() {
+    install -m 755 -d ${deb_img_dir}/etc/kernel/install.d
+    install -m 755 -d ${deb_img_dir}/etc/kernel/postinst.d
+    install -m 755 -d ${deb_img_dir}/etc/kernel/postrm.d
+    install -m 755 -d ${deb_img_dir}/etc/kernel/prerm.d
+
+    initrd="No"
+    [ -z "${CONFIG_BLK_DEV_INITRD}" ] || initrd="Yes"
+
+    for script in postinst postrm preinst prerm; do
+        sed -i -e "s,INITRD=[A-Za-z0-9]*,INITRD=${initrd},g" ${S}/debian/linux-image*.${script}
+        sed -i -e "s,version=.*,version=${krel},g" ${S}/debian/linux-image*.${script}
+    done
+}
+
+install_dtbs() {
+    [ -n "${CONFIG_OF}" ] || return 0
+    ${MAKE} O=${O} INSTALL_DTBS_PATH=${deb_img_dir}/usr/lib/linux-image-${krel} dtbs_install
+}
+
+install_kmods() {
+    [ -n "${CONFIG_MODULES}" ] || return 0
+    ${MAKE} O=${O} modules_install \
+        INSTALL_MOD_PATH=${deb_img_dir} \
+        INSTALL_MOD_STRIP=1
+    touch ${deb_img_dir}/lib/modules/${krel}/.fresh-install
+    rm -fv ${deb_img_dir}/lib/modules/${krel}/build
+    rm -fv ${deb_img_dir}/lib/modules/${krel}/source
+    install_kmods_debug
+}
+
+install_kmods_debug() {
+    [ -n "${CONFIG_DEBUG_INFO}" ] || return 0
+
+    kmod_inst_dir=${deb_dbg_dir}/usr/lib/debug
+
+    # cmd_sign=: Don't sign modules
+    # suffix-y=: Don't compress modules
+    ${MAKE} O=${O} modules_install \
+        INSTALL_MOD_PATH=${kmod_inst_dir} \
+        cmd_sign= \
+        suffix-y=
+}
+
+headers_check() {
+    ${MAKE} O=${O} headers_check
+}
+
+libc_headers() {
+    mkdir -p ${deb_libc_hdr_dir}
+    arches="${DISTRO_ARCH}"
+    if echo "${DEB_BUILD_PROFILES}" | grep -q "pkg.${BPN}.libcdev-arch-all"; then
+        arches="amd64 armhf arm64 i386 mipsel riscv64"
+    fi
+    for distro_arch in ${arches}; do
+        target_arch=$(dpkg-architecture --force -A${distro_arch} -qDEB_TARGET_MULTIARCH)
+        kernel_arch=$(get_kernel_arch ${distro_arch})
+        [ -n "${kernel_arch}" ] || {
+            echo "fatal: don't know the kernel arch for '${distro_arch}'!" >&2
+            return 1
+        }
+        ${MAKE} O=${O} headers_install ARCH=${kernel_arch} INSTALL_HDR_PATH=${deb_libc_hdr_dir}/usr
+        mkdir ${deb_libc_hdr_dir}/usr/include/${target_arch}
+        mv ${deb_libc_hdr_dir}/usr/include/asm ${deb_libc_hdr_dir}/usr/include/${target_arch}/
+
+        if [ "${distro_arch}" = "${DISTRO_ARCH}" ]; then
+            mkdir -p ${deb_libc_hdr_cross_dir}
+            ${MAKE} O=${O} headers_install INSTALL_HDR_PATH=${deb_libc_hdr_cross_dir}/usr/${target_arch}
+        fi
+    done
+}
+
+kernel_tools() {
+    # remove object files
+    find ${destdir}/scripts -type f -name '*.o' |xargs rm -f
+}
+
+kernel_headers() {
+    kernel_headers_dir="usr/src/linux-headers-${krel}"
+    destdir=${deb_kern_hdr_dir}/${kernel_headers_dir}
+    src_hdr_files=$(mktemp)
+    obj_hdr_files=$(mktemp)
+
+    mkdir -p ${destdir}
+    mkdir -p ${deb_kern_hdr_dir}/lib/modules/${krel}
+
+    (cd ${S}; find . -not -path './scripts/*' -a -not -path './tools/*' -a \( -name 'Makefile*' -o -name 'Kconfig*' -o -name '*.pl' \)) >>${src_hdr_files}
+    (cd ${S}; find arch/*/include include -type f -o -type l) >>${src_hdr_files}
+    (cd ${S}; find arch/${ARCH} -name module.lds -o -name Kbuild.platforms -o -name Platform) >>${src_hdr_files}
+    (cd ${S}; find $(find arch/${ARCH} -name include -o -name scripts -type d) -type f) >>${src_hdr_files}
+
+    if [ -n "${HEADERS_INSTALL_EXTRA}" ]; then
+        for d in ${HEADERS_INSTALL_EXTRA}; do
+            (cd ${S}; find ${d} -type f) >>${src_hdr_files}
+        done
+    fi
+
+    if [ -n "${CONFIG_MODULES}" ]; then
+        echo Module.symvers >> ${obj_hdr_files}
+    fi
+    (cd ${O}; find arch/${ARCH}/include include -type f) >>${obj_hdr_files}
+
+    # deploy files that were matched above
+    tar -C ${S} -cf - -T - <${src_hdr_files} | tar -C ${destdir} -xf -
+    tar -C ${O} -cf - -T - <${obj_hdr_files} | tar -C ${destdir} -xf -
+
+    # add the kernel config
+    cp ${O}/${KCONF} ${destdir}/.config
+
+    # add symlink to scripts and tools directories
+    ln -sf ../../lib/linux-kbuild-${krel}/scripts ${destdir}/scripts
+    if [ -n "${CONFIG_STACK_VALIDATION}" -o -n "${CONFIG_HAVE_OBJTOOL}" ]; then
+        ln -sf ../../lib/linux-kbuild-${krel}/tools ${destdir}/tools
+    fi
+
+    # create symlinks
+    ln -sf /${kernel_headers_dir} ${deb_kern_hdr_dir}/lib/modules/${krel}/build
+}
+
+install_headers() {
+    if dpkg --compare-versions "${krel}" "lt" "5.4.24"; then
+        headers_check
+    fi
+    [ -z ${kern_pkgs["linux-libc-dev"]} ] || libc_headers
+    kernel_headers
+}
+
+install_kbuild() {
+    kernel_kbuild_dir=usr/lib/linux-kbuild-${krel}
+    destdir=${1}/${kernel_kbuild_dir}
+    src_kbuild_files=$(mktemp)
+    obj_kbuild_files=$(mktemp)
+
+    mkdir -p ${destdir}
+
+    (cd ${S}; find . \( -path './scripts/*' -o -path './tools/*' \) -a \( -name 'Makefile*' -o -name 'Kconfig*' -o -name '*.pl' \)) >>${src_kbuild_files}
+    (cd ${S}; find scripts -type f -o -type l) >>${src_kbuild_files}
+
+    (cd ${O}; find scripts -type f) >>${obj_kbuild_files}
+    if [ -n "${CONFIG_STACK_VALIDATION}" -o -n "${CONFIG_HAVE_OBJTOOL}" ]; then
+        (cd ${O}; find tools/objtool -type f -executable) >>${obj_kbuild_files}
+    fi
+    if [ -n "${CONFIG_GCC_PLUGINS}" ]; then
+        (cd ${O}; find scripts/gcc-plugins -name *.so -o -name gcc-common.h) >>${obj_kbuild_files}
+    fi
+
+    # deploy files that were matched above
+    tar -C ${S} -cf - -T - <${src_kbuild_files} | tar -C ${destdir} -xf -
+    tar -C ${O} -cf - -T - <${obj_kbuild_files} | tar -C ${destdir} -xf -
+
+    # handle kernel development tools
+    kernel_tools
+}
+
+main install ${*}

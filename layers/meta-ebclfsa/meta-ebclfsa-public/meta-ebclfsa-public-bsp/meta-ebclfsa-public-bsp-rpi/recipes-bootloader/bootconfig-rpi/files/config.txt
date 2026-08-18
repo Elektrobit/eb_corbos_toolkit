@@ -1,0 +1,16 @@
+enable_uart=1
+uart_2ndstage=1
+kernel=/vmlinux-6.12.94-cip26
+auto_initramfs=0
+arm_64bit=1
+
+# console on HDMI
+# noaudio: skip HDMI-audio ASoC/PCM registration in vc4_hdmi, which otherwise
+# defers forever (-517) and prevents the DRM card (/dev/dri) from coming up.
+dtoverlay=vc4-kms-v3d-pi4,noaudio
+max_framebuffers=2
+
+# MCP2515 CAN interface on SPI, mapped to can0
+dtparam=spi=on
+dtoverlay=mcp2515-can0,oscillator=8000000,interrupt=12
+dtoverlay=spi-bcm2835-overlay
