@@ -65,16 +65,21 @@ jobs:
             --run-script "${RUN_SCRIPT}" \
             | grep -E '^DEV_CONTAINER_ID=[0-9a-f]{64}$' >> "${GITHUB_ENV}"
 
-      - name: Clean up runner resources
-        if: always()
+  # Check the result of the required job on pull requests and merge queue runs.
+  # Keep this as the single verification status consumed by branch protection.
+  verification_gate:
+    needs: [smoke-test]
+    if: >-
+      ${{
+        always() &&
+        ! cancelled() &&
+        (github.event_name == 'merge_group' || github.event_name == 'pull_request')
+      }}
+    name: Verification gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs
+        if: ${{ needs.smoke-test.result != 'success' }}
         run: |
-          set +e
-
-          # Stop and remove the detached devcontainer, if it was started.
-          if [[ -n "${DEV_CONTAINER_ID:-}" ]]; then
-            echo "Removing devcontainer ${DEV_CONTAINER_ID}"
-            docker rm -f "${DEV_CONTAINER_ID}"
-          fi
-
-          # Kill any lingering QEMU processes started by the smoke test.
-          pkill -f qemu-system
+          echo "Required job smoke-test finished with: ${{ needs.smoke-test.result }}"
+          exit 1
