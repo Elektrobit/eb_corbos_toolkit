@@ -1,0 +1,80 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+name: Pull Request Checks
+
+# Smoke-tests every pull request targeting main by running a Toolkit build
+# (kas build of the fastdev target) and booting the resulting fastdev image in
+# QEMU.
+#
+# Triggered by pull_request (not pull_request_target), so it runs in the context
+# of the PR head without access to repository secrets.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+# Cancel superseded runs for the same pull request; a new push makes older
+# in-flight checks obsolete.
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-test:
+    name: Build and Boot Smoke Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kas-config: kas/public.yml:kas/includes/qt.yml
+            test_boot: true
+          - kas-config: kas/public.yml:kas/includes/qt.yml:kas/targets/rpi4b.yml
+            test_boot: false
+    timeout-minutes: 120
+    env:
+      SCRIPTS_DIR: ${{ github.workspace }}/.github/scripts
+      WORKSPACE_ROOT: ${{ github.workspace }}
+      RUN_SCRIPT: ${{ github.workspace }}/scripts/run.sh
+      BITBAKE_EXECUTION_FIXER: ${{ github.workspace }}/.devcontainer/scripts/check_userns_restriction.sh
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: "Fix BitBake execution issue on Ubuntu 23.10+"
+        run: |
+          "${BITBAKE_EXECUTION_FIXER}" --yes
+
+      - name: "Test: Run kas build using run.sh"
+        run: |
+          cd "${WORKSPACE_ROOT}"
+          "${RUN_SCRIPT}" -d -- kas build --target fastdev "${{ matrix.kas-config }}"
+          "${RUN_SCRIPT}" -d -- kas build --target fastdev -c do_populate_sdk "${{ matrix.kas-config }}"
+
+      - name: "Test: Boot fastdev image in QEMU"
+        if: ${{ matrix.test_boot }}
+        run: |
+          bash "${SCRIPTS_DIR}/qemu_smoke_test.sh" \
+            --workspace-root "${WORKSPACE_ROOT}" \
+            --run-script "${RUN_SCRIPT}" \
+            | grep -E '^DEV_CONTAINER_ID=[0-9a-f]{64}$' >> "${GITHUB_ENV}"
+
+      - name: Clean up runner resources
+        if: always()
+        run: |
+          set +e
+
+          # Stop and remove the detached devcontainer, if it was started.
+          if [[ -n "${DEV_CONTAINER_ID:-}" ]]; then
+            echo "Removing devcontainer ${DEV_CONTAINER_ID}"
+            docker rm -f "${DEV_CONTAINER_ID}"
+          fi
+
+          # Kill any lingering QEMU processes started by the smoke test.
+          pkill -f qemu-system
