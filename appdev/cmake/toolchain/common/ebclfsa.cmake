@@ -1,5 +1,4 @@
-# Copyright 2025 Elektrobit Automotive GmbH
-# All rights reserved
+# Copyright 2025 Elektrobit. All rights reserved.
 
 set(ECLFSA_ELF_ENABLER "${CMAKE_SYSROOT}/usr/bin/lisa-elf-enabler")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static")

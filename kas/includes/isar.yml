@@ -1,0 +1,51 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+
+repos:
+  isar:
+    path: "layers/isar"
+    commit: "34c3cda51b46a2a2a405e472a3c4b88c820c765e"
+    branch:
+    layers:
+      meta:
+      meta-isar:
+      meta-test:
+    patches:
+      bootstrap-from-local-isar-apt:
+        repo: isar
+        path: "../../internal/isar-patches/bootstrap-from-local-isar-apt"
+      multiarch-fixes:
+        repo: isar
+        path: "../../internal/isar-patches/multiarch-fixes"
+      fix-premirrors:
+        repo: isar
+        path: "../../internal/isar-patches/fix-premirrors"
+      sdk-relocation:
+        repo: isar
+        path: "../../internal/isar-patches/sdk-relocation"
+      fix-buildstats:
+        repo: isar
+        path: "../../internal/isar-patches/fix-buildstats"
+      sbom-python-fixes:
+        repo: isar
+        path: "../../internal/isar-patches/sbom-python-fixes"
+      fix-symlink-race-condition:
+        repo: isar
+        path: "../../internal/isar-patches/fix-symlink-race-condition"
+      fix-isar-apt-pool-race:
+        repo: isar
+        path: "../../internal/isar-patches/fix-isar-apt-pool-race"
+      gitignore:
+        repo: isar
+        path: "../../internal/isar-patches/gitignore"
+
+local_conf_header:
+  kernel: |
+    # Disable ISAR kernel package
+    BBMASK:append = " layers/isar/meta/recipes-kernel/linux/linux-distro.bb"
+    # Disable ISAR BSP packages
+    BBMASK:append = " layers/isar/meta/recipes-bsp/.*\.bb"
+  ccache: |
+    USE_CCACHE = "1"

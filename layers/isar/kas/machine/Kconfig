@@ -1,0 +1,278 @@
+# This software is a part of Isar.
+# Copyright (C) 2023-2024 ilbers GmbH
+#
+# SPDX-License-Identifier: MIT
+#
+# Authors:
+#  Uladzimir Bely <ubely@ilbers.de>
+
+menu "Machine selection"
+
+config ARCH_AMD64
+	bool
+
+config ARCH_ARM64
+	bool
+
+config ARCH_ARMHF
+	bool
+
+config ARCH_I386
+	bool
+
+config ARCH_MIPSEL
+	bool
+
+config ARCH_RISCV64
+	bool
+
+choice
+	prompt "Machine selection"
+	default MACHINE_QEMU_AMD64
+
+config MACHINE_BANANAPI
+	bool "bananapi"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_BEAGLEPLAY
+	bool "beagleplay"
+	select DISTRO_DEBIAN
+	select CODENAME_BOOKWORM
+	select ARCH_ARM64
+
+config MACHINE_CONTAINER_AMD64
+	bool "container-amd64"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_AMD64
+
+config MACHINE_DE0_NANO_SOC
+	bool "de0-nano-soc"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_HIKEY
+	bool "hikey"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARM64
+
+config MACHINE_NANOPI_NEO
+	bool "nanopi-neo"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_NANOPI_NEO_EFI
+	bool "nanopi-neo-efi"
+	select DISTRO_DEBIAN
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_PHYBOARD_MIRA
+	bool "phyboard-mira"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_QEMU_AMD64_CIP
+	bool "qemuamd64-cip"
+	select DISTRO_DEBIAN
+	select CODENAME_BOOKWORM
+	select ARCH_AMD64
+
+config MACHINE_QEMU_AMD64_SB
+	bool "qemuamd64-sb"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select ARCH_AMD64
+
+config MACHINE_QEMU_AMD64_ISO
+	bool "qemuamd64-iso"
+	select DISTRO_DEBIAN
+	select CODENAME_BOOKWORM
+	select ARCH_AMD64
+
+config MACHINE_QEMU_AMD64
+	bool "qemuamd64"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select CODENAME_TRIXIE
+	select DISTRO_UBUNTU
+	select CODENAME_FOCAL
+	select CODENAME_JAMMY
+	select CODENAME_NOBLE
+	select ARCH_AMD64
+
+config MACHINE_QEMU_ARM
+	bool "qemuarm"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select CODENAME_TRIXIE
+	select ARCH_ARMHF
+
+config MACHINE_QEMU_ARM64
+	bool "qemuarm64"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select CODENAME_TRIXIE
+	select DISTRO_UBUNTU
+	select CODENAME_FOCAL
+	select CODENAME_JAMMY
+	select CODENAME_NOBLE
+	select ARCH_ARM64
+
+config MACHINE_QEMU_I386
+	bool "qemui386"
+	select DISTRO_DEBIAN
+	select CODENAME_BUSTER
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_I386
+
+config MACHINE_QEMU_MIPSEL
+	bool "qemumipsel"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_MIPSEL
+
+config MACHINE_QEMU_RISCV64
+	bool "qemuriscv64"
+	select DISTRO_DEBIAN
+	select CODENAME_TRIXIE
+	select CODENAME_SID
+	select ARCH_RISCV64
+
+config MACHINE_RPI_ARM_V7
+	bool "rpi-arm-v7"
+	select DISTRO_RASPIOS
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_RPI_ARM_V7L
+	bool "rpi-arm-v7l"
+	select DISTRO_RASPIOS
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_RPI_ARM
+	bool "rpi-arm"
+	select DISTRO_RASPIOS
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARMHF
+
+config MACHINE_RPI_ARM64_V8
+	bool "rpi-arm64-v8"
+	select DISTRO_RASPIOS
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_ARM64
+
+config MACHINE_RPI_ARM64_V8_EFI
+	bool "rpi-arm64-v8-efi"
+	select DISTRO_DEBIAN
+	select CODENAME_BOOKWORM
+	select ARCH_ARM64
+
+config MACHINE_SIFIVE_FU540
+	bool "sifive-fu540"
+	select DISTRO_DEBIAN
+	select CODENAME_TRIXIE
+	select CODENAME_SID
+	select ARCH_RISCV64
+
+config MACHINE_STARFIVE_VISIONFIVE2
+	bool "starfive-visionfive2"
+	select DISTRO_DEBIAN
+	select CODENAME_TRIXIE
+	select CODENAME_SID
+	select ARCH_RISCV64
+
+config MACHINE_STM32MP15X
+	bool "stm32mp15x"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select ARCH_ARMHF
+
+config MACHINE_VIRTUALBOX
+	bool "virtualbox"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select ARCH_AMD64
+
+config MACHINE_VMWARE
+	bool "vmware"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select ARCH_AMD64
+
+config MACHINE_X86_PC
+	bool "x86 PC"
+	select DISTRO_DEBIAN
+	select CODENAME_BULLSEYE
+	select CODENAME_BOOKWORM
+	select CODENAME_TRIXIE
+	select DISTRO_UBUNTU
+	select CODENAME_FOCAL
+	select CODENAME_JAMMY
+	select CODENAME_NOBLE
+	select ARCH_AMD64
+
+endchoice
+
+config KAS_INCLUDE_MACHINE
+	string
+	default "kas/machine/bananapi.yaml" if MACHINE_BANANAPI
+	default "kas/machine/beagleplay.yaml" if MACHINE_BEAGLEPLAY
+	default "kas/machine/container-amd64.yaml" if MACHINE_CONTAINER_AMD64
+	default "kas/machine/de0-nano-soc.yaml" if MACHINE_DE0_NANO_SOC
+	default "kas/machine/hikey.yaml" if MACHINE_HIKEY
+	default "kas/machine/nanopi-neo.yaml" if MACHINE_NANOPI_NEO
+	default "kas/machine/nanopi-neo-efi.yaml" if MACHINE_NANOPI_NEO_EFI
+	default "kas/machine/phyboard-mira.yaml" if MACHINE_PHYBOARD_MIRA
+	default "kas/machine/qemuamd64-cip.yaml" if MACHINE_QEMU_AMD64_CIP
+	default "kas/machine/qemuamd64-sb.yaml" if MACHINE_QEMU_AMD64_SB
+	default "kas/machine/qemuamd64-iso.yaml" if MACHINE_QEMU_AMD64_ISO
+	default "kas/machine/qemuamd64.yaml" if MACHINE_QEMU_AMD64
+	default "kas/machine/qemuarm.yaml" if MACHINE_QEMU_ARM
+	default "kas/machine/qemuarm64.yaml" if MACHINE_QEMU_ARM64
+	default "kas/machine/qemui386.yaml" if MACHINE_QEMU_I386
+	default "kas/machine/qemumipsel.yaml" if MACHINE_QEMU_MIPSEL
+	default "kas/machine/qemuriscv64.yaml" if MACHINE_QEMU_RISCV64
+	default "kas/machine/rpi-arm-v7.yaml" if MACHINE_RPI_ARM_V7
+	default "kas/machine/rpi-arm-v7l.yaml" if MACHINE_RPI_ARM_V7L
+	default "kas/machine/rpi-arm.yaml" if MACHINE_RPI_ARM
+	default "kas/machine/rpi-arm64-v8.yaml" if MACHINE_RPI_ARM64_V8
+	default "kas/machine/rpi-arm64-v8-efi.yaml" if MACHINE_RPI_ARM64_V8_EFI
+	default "kas/machine/sifive-fu540.yaml" if MACHINE_SIFIVE_FU540
+	default "kas/machine/starfive-visionfive2.yaml" if MACHINE_STARFIVE_VISIONFIVE2
+	default "kas/machine/stm32mp15x.yaml" if MACHINE_STM32MP15X
+	default "kas/machine/virtualbox.yaml" if MACHINE_VIRTUALBOX
+	default "kas/machine/vmware.yaml" if MACHINE_VMWARE
+	default "kas/machine/x86-pc.yaml" if MACHINE_X86_PC
+
+endmenu

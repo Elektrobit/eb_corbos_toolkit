@@ -16,18 +16,44 @@
         {
             "name": "fastdev-hi-qemuarm64",
             "inherits": "base-hi",
-            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-qemuarm64/toolchain-fastdev-hi-qemuarm64.cmake",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-arm64/toolchain-fastdev-hi-arm64.cmake",
             "environment": {
-                "LD_LIBRARY_PATH": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib:/workspace/sysroots/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib/x86_64-linux-gnu"
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-ebcl-qemuarm64"
             },
             "cacheVariables": {
                 "CMAKE_SYSROOT": {
                     "type": "STRING",
-                    "value": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64"
+                    "value": "$env{SYSROOT}"
                 },
                 "IS_FASTDEV": {
                     "type": "BOOL",
                     "value": "TRUE"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-qemuarm64"
+                }
+            }
+        },
+        {
+            "name": "fastdev-hi-rpi4b",
+            "inherits": "base-hi",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-arm64/toolchain-fastdev-hi-arm64.cmake",
+            "environment": {
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-rpi4b"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT}"
+                },
+                "IS_FASTDEV": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-rpi4b"
                 }
             }
         }
@@ -36,6 +62,11 @@
         {
             "name": "fastdev-hi-qemuarm64",
             "configurePreset": "fastdev-hi-qemuarm64",
+            "inherits": "base"
+        },
+        {
+            "name": "fastdev-hi-rpi4b",
+            "configurePreset": "fastdev-hi-rpi4b",
             "inherits": "base"
         }
     ]

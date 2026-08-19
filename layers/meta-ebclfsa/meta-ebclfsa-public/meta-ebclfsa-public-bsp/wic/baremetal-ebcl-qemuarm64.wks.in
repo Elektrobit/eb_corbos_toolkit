@@ -1,0 +1,4 @@
+bootloader --ptable msdos
+
+part / --ondisk vda --source=rootfs --fstype=ext4 --label="root" --align=4096 --fixed-size=2048M
+part /data --ondisk vda --fstype=ext4 --label="data" --align=4096 --fixed-size=100M

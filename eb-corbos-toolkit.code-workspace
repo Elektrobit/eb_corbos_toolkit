@@ -1,0 +1,207 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "appdev/apps/hello-safety"
+		},
+		{
+			"path": "appdev/apps/hello-world"
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"github.vscode-github-actions",
+			"redhat.vscode-yaml",
+			"streetsidesoftware.code-spell-checker"
+		]
+	},
+	"settings": {
+		"files.watcherExclude": {
+			"**/build/**": true
+		},
+		// Disable the C/C++ extension's fallback symbol-browsing index.
+		// Without this setting, the C/C++ extension will try to index all source files in the workspace,
+		// which can be very slow and resource-intensive - especially with build/ containing a complete
+		// BitBake build tree. This has already caused performance issues, up to the Linux OOM killer terminating
+		// processes. Since we do not need the C/C++ extension's fallback symbol-browsing index, we disable it here.
+		"C_Cpp.default.browse.path": [],
+		"editor.formatOnSave": true,
+		"editor.rulers": [
+			100
+		],
+		"files.insertFinalNewline": true,
+		"files.trimFinalNewlines": true,
+		"files.trimTrailingWhitespace": true,
+		"redhat.telemetry.enabled": false,
+		"[yaml]": {
+			"editor.defaultFormatter": "redhat.vscode-yaml"
+		},
+		"yaml.format.printWidth": 1000
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "Configure app from active configure preset",
+				"type": "shell",
+				"detail": "Application configure task for currently active preset",
+				"command": "cmake",
+				"group": "build",
+				"args": [
+					".",
+					"--preset",
+					"${command:cmake.activeBuildPresetName}"
+				],
+				"options": {
+					"cwd": "${command:cmake.activeFolderPath}"
+				},
+				"hide": true,
+				"problemMatcher": []
+			},
+			{
+				"label": "Build app from active build preset",
+				"type": "shell",
+				"dependsOn": "Configure app from active configure preset",
+				"detail": "Application build task for currently active preset",
+				"command": "cmake",
+				"group": "build",
+				"args": [
+					"--build",
+					"--preset",
+					"${command:cmake.activeBuildPresetName}"
+				],
+				"options": {
+					"cwd": "${command:cmake.activeFolderPath}"
+				},
+				"problemMatcher": [
+					"$gcc"
+				]
+			},
+			{
+				"label": "Deploy app from active build preset",
+				"type": "shell",
+				"dependsOn": "Build app from active build preset",
+				"command": "/workspace/scripts/target.sh -c deploy -a ${command:cmake.buildDirectory}",
+				"problemMatcher": []
+			},
+			{
+				"label": "Run app from active build preset",
+				"type": "shell",
+				"dependsOn": "Build app from active build preset",
+				"command": "/workspace/scripts/target.sh -c run -a ${command:cmake.buildDirectory} -b ${command:cmake.launchTargetPath}",
+				"problemMatcher": []
+			},
+			{
+				"label": "Start gdb on target",
+				"detail": "Start gdbserver on remote deployment target",
+				"type": "shell",
+				"hide": true,
+				"dependsOn": "Build app from active build preset",
+				"command": "/workspace/scripts/target.sh -c start_debug -a ${command:cmake.buildDirectory}",
+				"problemMatcher": []
+			},
+			{
+				"label": "Attach gdb on target",
+				"detail": "Attach gdbserver on remote deployment target to ${command:cmake.launchTargetPath}",
+				"type": "shell",
+				"hide": true,
+				"command": "/workspace/scripts/target.sh -c attach_debug -a ${command:cmake.buildDirectory} -b ${command:cmake.launchTargetPath}",
+				"problemMatcher": []
+			},
+			{
+				"label": "Stop gdb on target",
+				"detail": "Stop gdbserver on remote deployment target",
+				"type": "shell",
+				"hide": true,
+				"command": "/workspace/scripts/target.sh -c stop_debug -a ${command:cmake.buildDirectory}",
+				"problemMatcher": []
+			}
+		]
+	},
+	// Launch configurations common for all applications, located in appdev/apps.
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Debug app from active preset (launch)",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${command:cmake.buildDirectory}/install/${command:cmake.launchTargetPath}",
+				"stopAtEntry": true,
+				"cwd": "${command:cmake.buildDirectory}/install/",
+				// Set LD_LIBRARY_PATH for host environment
+				"environment": [
+					{
+						"name": "LD_LIBRARY_PATH",
+						"value": "$LD_LIBRARY_PATH:${command:cmake.buildDirectory}/install/usr/lib"
+					}
+				],
+				"additionalSOLibSearchPath": "${command:cmake.buildDirectory}/install/usr/lib",
+				"MIMode": "gdb",
+				"preLaunchTask": "Start gdb on target",
+				// We use the pipeTransport to be able to handover the address of the remote target with the .gdbinit file.
+				// We can't use the "miDebuggerServerAddress" setting, as this would require us to use a static target address.
+				// Without the pipeTransport workaround, debugging would only partly work (e.g. you would not be able to interrupt a
+				// running application), since VSCode handles remote targets differently.
+				// Using the pipeTransport workaround forces VSCode to treat the gdb session as a remote target without the need
+				// to specify the target address statically via "miDebuggerServerAddress".
+				"pipeTransport": {
+					"pipeCwd": "/usr/bin",
+					"pipeProgram": "/bin/bash",
+					"pipeArgs": [
+						"-c"
+					],
+					"debuggerPath": "/usr/bin/gdb-multiarch"
+				},
+				"postDebugTask": "Stop gdb on target",
+				"setupCommands": [
+					{
+						"description": "Source gdbinit file to determine remote connection and prepare application environment",
+						"text": "source ${command:cmake.buildDirectory}/.gdbinit"
+					}
+				]
+			},
+			{
+				"name": "Debug app from active preset (attach)",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${command:cmake.buildDirectory}/install/${command:cmake.launchTargetPath}",
+				"stopAtEntry": true,
+				"cwd": "${command:cmake.buildDirectory}/install/",
+				// Set LD_LIBRARY_PATH for host environment
+				"environment": [
+					{
+						"name": "LD_LIBRARY_PATH",
+						"value": "$LD_LIBRARY_PATH:${command:cmake.buildDirectory}/install/usr/lib"
+					}
+				],
+				"additionalSOLibSearchPath": "${command:cmake.buildDirectory}/install/usr/lib",
+				"MIMode": "gdb",
+				"preLaunchTask": "Attach gdb on target",
+				// We use the pipeTransport to be able to handover the address of the remote target with the .gdbinit file.
+				// We can't use the "miDebuggerServerAddress" setting, as this would require us to use a static target address.
+				// Without the pipeTransport workaround, debugging would only partly work (e.g. you would not be able to interrupt a
+				// running application), since VSCode handles remote targets differently.
+				// Using the pipeTransport workaround forces VSCode to treat the gdb session as a remote target without the need
+				// to specify the target address statically via "miDebuggerServerAddress".
+				"pipeTransport": {
+					"pipeCwd": "/usr/bin",
+					"pipeProgram": "/bin/bash",
+					"pipeArgs": [
+						"-c"
+					],
+					"debuggerPath": "/usr/bin/gdb-multiarch"
+				},
+				"postDebugTask": "Stop gdb on target",
+				"setupCommands": [
+					{
+						"description": "Source gdbinit file to determine remote connection and prepare application environment",
+						"text": "source ${command:cmake.buildDirectory}/.gdbinit"
+					}
+				]
+			}
+		]
+	}
+}

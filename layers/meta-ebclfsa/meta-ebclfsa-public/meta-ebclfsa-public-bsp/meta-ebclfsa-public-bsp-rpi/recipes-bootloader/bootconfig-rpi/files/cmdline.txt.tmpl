@@ -1,0 +1,1 @@
+console=tty1 console=${MACHINE_SERIAL},${BAUDRATE_TTY} root=/dev/${EBCLFSA_LIVM_DEV} rw rootfstype=ext4 fsck.repair=yes rootwait earlycon=uart8250,mmio32,0xfe215040 init=/usr/bin/ebclfsa-cflinit sdk_enable lisa_syscall_whitelist=2026 sharedmem.enable_sharedmem=0

@@ -11,14 +11,36 @@
         {
             "name": "fastdev-li-qemuarm64",
             "inherits": "base",
-            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-qemuarm64/toolchain-fastdev-li-qemuarm64.cmake",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-arm64/toolchain-fastdev-li-arm64.cmake",
             "environment": {
-                "LD_LIBRARY_PATH": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib:/workspace/sysroots/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64/usr/lib/x86_64-linux-gnu"
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-ebcl-qemuarm64"
             },
             "cacheVariables": {
                 "CMAKE_SYSROOT": {
                     "type": "STRING",
-                    "value": "$env{SYSROOT_BASE}/fastdev-sdk-ubuntu-ebclfsa-ebcl-qemuarm64"
+                    "value": "$env{SYSROOT}"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-qemuarm64"
+                }
+            }
+        },
+        {
+            "name": "fastdev-li-rpi4b",
+            "inherits": "base",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/fastdev-arm64/toolchain-fastdev-li-arm64.cmake",
+            "environment": {
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-rpi4b"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT}"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-rpi4b"
                 }
             }
         }
@@ -27,6 +49,11 @@
         {
             "name": "fastdev-li-qemuarm64",
             "configurePreset": "fastdev-li-qemuarm64",
+            "inherits": "base"
+        },
+        {
+            "name": "fastdev-li-rpi4b",
+            "configurePreset": "fastdev-li-rpi4b",
             "inherits": "base"
         }
     ]

@@ -1,0 +1,49 @@
+# Kselftest package for Linux
+#
+# This software is a part of ISAR.
+# Copyright (c) Mentor Graphics, a Siemens Business, 2020
+# Copyright (c) Siemens, 2025
+#
+# SPDX-License-Identifier: MIT
+
+inherit dpkg
+
+DESCRIPTION ?= "Kernel selftests from Linux kernel ${PV}"
+
+DEBIAN_BUILD_DEPENDS ?= " \
+    rsync, \
+    flex,  \
+    bison, \
+    ${@ 'fuse' if d.getVar('BASE_DISTRO_CODENAME') in ['bullseye', 'buster'] else 'fuse3'}, \
+    libelf-dev, \
+    libcap-ng-dev, \
+    libpopt-dev, \
+    libcap-dev, \
+    libmount-dev, \
+    libfuse-dev, \
+    libmnl-dev, \
+    pkg-config, \
+    clang:native, \
+    llvm:native, \
+"
+
+FILESPATH:append = ":${LAYERDIR_core}/recipes-kernel/kselftest/files"
+SRC_URI += "file://rules.tmpl"
+
+S = "${WORKDIR}/linux-${PV}"
+
+TEMPLATE_FILES = "rules.tmpl"
+TEMPLATE_VARS += "KSELFTEST_ARGS"
+
+KSELFTEST_TARGETS ?= ""
+KSELFTEST_SKIP_TARGETS ?= ""
+KSELFTEST_FORCE_TARGETS ?= "0"
+
+KSELFTEST_ARGS = "${@ "TARGETS=\"${KSELFTEST_TARGETS}\"" if d.getVar('KSELFTEST_TARGETS') else ''}"
+KSELFTEST_ARGS .= "${@ " FORCE_TARGETS=1" if bb.utils.to_boolean(d.getVar('KSELFTEST_FORCE_TARGETS')) else ''}"
+KSELFTEST_ARGS .= "${@ " SKIP_TARGETS=\"${KSELFTEST_SKIP_TARGETS}\"" if d.getVar('KSELFTEST_SKIP_TARGETS') else ''}"
+
+do_prepare_build[cleandirs] += "${S}/debian"
+do_prepare_build() {
+    deb_debianize
+}
