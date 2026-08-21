@@ -24,7 +24,7 @@ Re-open it in the devcontainer.
 Open the [User's Manual](https://elektrobit.github.io/eb_corbos_toolkit/) and follow the instructions, starting with the section [Rebuild and Run Target Image](https://elektrobit.github.io/eb_corbos_toolkit/#_rebuild_and_run_target_image).
 
 > [!NOTE]
-> The instructions "Obtain EB corbos Toolkit", "Enter Development Container", and "Run Prebuilt Target Image" only work with the self-contained delivery archive.
+> The instructions "Obtain EB corbos Toolkit", "Enter Development Container", and "Run Prebuilt Target Image" work only with the self-contained delivery archive.
 
 ## Reporting Issues
 

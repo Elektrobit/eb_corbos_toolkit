@@ -68,6 +68,9 @@ for i in $(seq 1 "${max_tries}"); do
   if grep -q "${msg}" "${log}" 2>/dev/null; then
     echo "Waiting for \"${msg}\" message in ${log} succeeded" >&2
     rm -f "${log}"
+    # remove files created during devcontainer run
+    rm -f "${workspace_root}/.devcontainer/timezone.env"
+    rm -f "${workspace_root}/.devcontainer/credentials.netrc"
     exit 0
   fi
   echo "Waiting for \"${msg}\" message in ${log} ... (${i}/${max_tries})" >&2
