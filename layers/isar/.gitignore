@@ -1,0 +1,7 @@
+*~
+/*.patch
+__pycache__
+.config.yaml*
+.kas_shell_history
+/build/
+/build-*/

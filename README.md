@@ -35,3 +35,6 @@ Issue templates are provided for bug reports, enhancement requests, and document
 
 This project is licensed under the MIT License.
 See [LICENSE](LICENSE) for details.
+
+This project uses Open Source Software.
+See [NOTICE](NOTICE.md) for details.

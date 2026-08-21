@@ -1,0 +1,9 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+
+repos:
+  meta-ebclfsa:
+    layers:
+      meta-ebclfsa-public/meta-ebclfsa-public-bsp/meta-ebclfsa-public-bsp-rpi:
