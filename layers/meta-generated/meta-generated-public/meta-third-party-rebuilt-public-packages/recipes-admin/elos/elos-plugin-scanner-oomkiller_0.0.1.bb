@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-oomkiller_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "f85e55dfaa676493ee3338b76265396c"
-SRC_URI[deb0.sha1sum] = "e30eedbf4ab658686b316ad7ef54bf919f59eac5"
-SRC_URI[deb0.sha256sum] = "59f01248099d51b1b1cb234922bf374dbdf63d6003f78b19d078954a0857d644"
+SRC_URI[deb0.md5sum] = "e769e7bc1744fbf1d656088b0c569551"
+SRC_URI[deb0.sha1sum] = "c9bdf84d9e31c47af1de9d05b34be99259c78d8c"
+SRC_URI[deb0.sha256sum] = "299135f74018f8f41c63bf058e2c51a2c72d7b441012131f5a4229a37b67d5d3"
 
 RDEPENDS = " \
     libc6 \

@@ -121,14 +121,18 @@ main() {
 
   # If the sysctl knob is absent or not active, there is nothing to do.
   if [[ ! -r "${USERNS_SYSCTL_FILE}" ]]; then
-    dc_info "AppArmor user namespace restriction not present on this host."
+    if [[ "${QUIET}" != "1" ]]; then
+      dc_info "AppArmor user namespace restriction not present on this host."
+    fi
     return 0
   fi
 
   local value
   value="$(cat "${USERNS_SYSCTL_FILE}" 2>/dev/null || echo 0)"
   if [[ "${value}" != "1" ]]; then
-    dc_info "AppArmor user namespace restriction is not active."
+    if [[ "${QUIET}" != "1" ]]; then
+      dc_info "AppArmor user namespace restriction is not active."
+    fi
     return 0
   fi
 

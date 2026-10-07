@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elosc-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "fd3c9d9acdffa7236d8cdc63bda76b21"
-SRC_URI[deb0.sha1sum] = "75679491e5141a64ab940d26f43adc1154526135"
-SRC_URI[deb0.sha256sum] = "a0b4044027719b7874bef96321e8860fd38e4c16ab50030822fb3b0309bfba3e"
+SRC_URI[deb0.md5sum] = "7112799dae86a105bf1a8c74247ad914"
+SRC_URI[deb0.sha1sum] = "6dc9d939feab2c713bbc9da09c77d2aa14b04a62"
+SRC_URI[deb0.sha256sum] = "2f416192994cc855ba51981a91b6e8eb7448c26a9380b1c781ec8e0db77a64fd"
 
 RDEPENDS = " \
     elosc \

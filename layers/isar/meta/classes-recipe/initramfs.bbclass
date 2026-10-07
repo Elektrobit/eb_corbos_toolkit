@@ -1,4 +1,4 @@
-# This software is a part of ISAR.
+# This software is a part of Isar.
 
 # Make workdir and stamps machine-specific without changing common PN target
 WORKDIR = "${TMPDIR}/work/${DISTRO}-${DISTRO_ARCH}/${PN}-${MACHINE}/${PV}-${PR}"
@@ -22,7 +22,7 @@ INITRAMFS_FULLNAME = "${PN}-${DISTRO}-${MACHINE}"
 # Bill-of-material
 ROOTFS_MANIFEST_DEPLOY_DIR = "${DEPLOY_DIR_IMAGE}"
 ROOTFS_PACKAGE_SUFFIX = "${INITRAMFS_FULLNAME}"
-SBOM_DISTRO_NAME:append = "-initramfs"
+SBOM_DISTRO_NAME:append = "-Initramfs"
 
 DEPENDS += "${INITRAMFS_INSTALL}"
 

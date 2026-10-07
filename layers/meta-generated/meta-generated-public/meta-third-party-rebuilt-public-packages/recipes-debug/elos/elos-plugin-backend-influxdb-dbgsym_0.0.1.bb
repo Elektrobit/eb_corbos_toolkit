@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-backend-influxdb-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "baf0e0e652ccda735527f30c43974125"
-SRC_URI[deb0.sha1sum] = "68e84183552d279e8e53e46a6cbaf19cf3de548d"
-SRC_URI[deb0.sha256sum] = "844de7f194e3641cd15e7cb231e0b7ea72bea48adaa7b4a729bea58e437ca431"
+SRC_URI[deb0.md5sum] = "b95c9b904a4432ed90f24c5e14c3b33c"
+SRC_URI[deb0.sha1sum] = "416bf1ba1665cea247e383420529f4695e9eb9fb"
+SRC_URI[deb0.sha256sum] = "6c911ef6a67e481a4b4df003948adb6ceb150e1acfe91adc14804a93342f3b75"
 
 RDEPENDS = " \
     elos-plugin-backend-influxdb \

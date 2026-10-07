@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/libu/libubox/libjson-script1-dbgsym_20250807_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "757b55813d394221019f886c3a3ef261"
-SRC_URI[deb0.sha1sum] = "1735dc8241796b423ab984b8bac986c4ea6a2f1c"
-SRC_URI[deb0.sha256sum] = "43febe84b04061c7e1aac407f94daf29d0338b73650a771b54ab3081f8aa75ec"
+SRC_URI[deb0.md5sum] = "4bf776618bb38e7e18a40e476747abfa"
+SRC_URI[deb0.sha1sum] = "1e189ea9ca8eb4b542066b443010b47f3adb0ea1"
+SRC_URI[deb0.sha256sum] = "cf7c9fbb65969805d84dd8720b9e8c4d3b75c0ec5d491dfb48d8c47ec7283524"
 
 RDEPENDS = " \
     libjson-script1 \

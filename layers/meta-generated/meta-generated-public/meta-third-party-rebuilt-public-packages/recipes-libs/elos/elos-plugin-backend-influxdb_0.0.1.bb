@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-backend-influxdb_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "4dd5daec4174eea8733f66d931fe6215"
-SRC_URI[deb0.sha1sum] = "85704a6b9d75e6b698dfc567e09cba1a273593e0"
-SRC_URI[deb0.sha256sum] = "743a3da4b7c302665a34d6904a20f14ef482e0b9b5308d7c1574ea006e78f349"
+SRC_URI[deb0.md5sum] = "98ad2db30ecd1e2477683a9c9caa005d"
+SRC_URI[deb0.sha1sum] = "34ae8f4e65c1f1436eee7c4a2b21e4dbc4b12338"
+SRC_URI[deb0.sha256sum] = "896ef5a7f681cad1b352c9d97f50e92b42775e64e37d3b05179673e6ee28cf15"
 
 RDEPENDS = " \
     libc6 \

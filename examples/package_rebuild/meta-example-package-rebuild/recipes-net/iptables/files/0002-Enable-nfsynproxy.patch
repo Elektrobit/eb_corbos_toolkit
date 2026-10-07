@@ -1,0 +1,33 @@
+From: Elektrobit <info@elektrobit.com>
+Subject: [PATCH] Enable nfsynproxy
+
+Enable the SYNPROXY configuration tool (--enable-nfsynproxy) for
+TCP SYN flood protection on the target.  Add libpcap-dev to
+Build-Depends as required by the nfsynproxy feature.
+
+diff --git a/debian/control b/debian/control
+index 1111111..2222222 100644
+--- a/debian/control
++++ b/debian/control
+@@ -9,6 +9,7 @@ Uploaders: Arturo Borrero Gonzalez <arturo@debian.org>,
+ Build-Depends: debhelper-compat (= 13),
+                libmnl-dev,
+                libnetfilter-conntrack-dev,
++               libpcap-dev,
+                libnfnetlink-dev,
+                libnftnl-dev (>= 1.1.6),
+                netbase (>= 6.0),
+diff --git a/debian/rules b/debian/rules
+index 3333333..4444444 100755
+--- a/debian/rules
++++ b/debian/rules
+@@ -16,7 +16,8 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+ override_dh_auto_configure:
+ 	dh_auto_configure -- --disable-libipq \
+ 			     --enable-devel \
+-			     $(silent_rules_opt)
++			     --enable-nfsynproxy \
++			     $(silent_rules_opt)
+
+ execute_after_dh_auto_install:
+ 	# leave room for paths links managed by update-alternatives

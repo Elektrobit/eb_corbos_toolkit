@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/u/uci/uci-dbgsym_20250206_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "07df743949cac34120bce97ed6875efe"
-SRC_URI[deb0.sha1sum] = "3fe60de7221ab5fcb8eb8869998a39f8263c58f4"
-SRC_URI[deb0.sha256sum] = "b80c0b20451b87b0f0199aaec6069d30ea7ec9fa87f560bc29e29593455e2997"
+SRC_URI[deb0.md5sum] = "498095d52db8880b7f72f1d84c722cdb"
+SRC_URI[deb0.sha1sum] = "28895d41ba9c9931f5606ed4c282cfd7c748f176"
+SRC_URI[deb0.sha256sum] = "5a228643017623f61e186e9c495013de49bc353003b172fe72b2c524dca0ed54"
 
 RDEPENDS = " \
     uci \

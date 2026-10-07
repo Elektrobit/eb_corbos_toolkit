@@ -1,0 +1,26 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+
+local_conf_header:
+  set_preferred_version_linux_cip: |
+    # Set Version for linux-ebclfsa-fastdev to dsc-based rebuild
+    PREFERRED_VERSION_linux-ebclfsa-fastdev = "6.12.94-cip26-ebclfsa1-dsc"
+    # Pin provider to linux-ebclfsa for binary packages, provided by linux-ebclfsa
+    PREFERRED_PROVIDER_linux-headers-ebclfsa-fastdev = "linux-ebclfsa-fastdev"
+    PREFERRED_PROVIDER_linux-image-ebclfsa-fastdev = "linux-ebclfsa-fastdev"
+    PREFERRED_PROVIDER_linux-image-ebclfsa-fastdev-dbg = "linux-ebclfsa-fastdev"
+    PREFERRED_PROVIDER_linux-kbuild-ebclfsa-fastdev = "linux-ebclfsa-fastdev"
+    PREFERRED_PROVIDER_linux-kbuild-ebclfsa-fastdev-arm64-cross = "linux-ebclfsa-fastdev"
+  set_preferred_version_iptables: |
+    # Set Version for iptables to dsc-based rebuild
+    PREFERRED_VERSION_iptables = "1.8.11-dsc"
+    # Pin provider to iptables for binary packages, provided by iptables
+    PREFERRED_PROVIDER_iptables = "iptables"
+    PREFERRED_PROVIDER_libip4tc2 = "iptables"
+    PREFERRED_PROVIDER_libip6tc2 = "iptables"
+    PREFERRED_PROVIDER_libip6tc-dev = "iptables"
+    PREFERRED_PROVIDER_libip4tc-dev = "iptables"
+    PREFERRED_PROVIDER_libiptc-dev = "iptables"
+    PREFERRED_PROVIDER_libxtables-dev = "iptables"

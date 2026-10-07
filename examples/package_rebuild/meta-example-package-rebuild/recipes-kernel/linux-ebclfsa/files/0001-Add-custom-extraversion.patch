@@ -1,0 +1,19 @@
+From: Elektrobit <info@elektrobit.com>
+Subject: [PATCH] Add custom EXTRAVERSION tag
+
+Add "-custom" to EXTRAVERSION so the rebuilt kernel is
+identifiable via uname -r.
+
+diff --git a/Makefile b/Makefile
+index 1111111..2222222 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@
+ VERSION = 6
+ PATCHLEVEL = 12
+ SUBLEVEL = 94
+-EXTRAVERSION =
++EXTRAVERSION = -custom
+ NAME = Baby Opossum Posse
+
+ # *DOCUMENTATION*

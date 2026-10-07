@@ -156,7 +156,7 @@ partial matching feature for a short time between 0.7 and 0.8. In 0.8 the
 version has to be the exact upsteam match.
 It is probably best to not specify a version if you can.
 
-### `isar-image.bbclass` class will be deprecated in future version of isar
+### `isar-image.bbclass` class will be deprecated in future version of Isar
 
 The content of `isar-image.bbclass` was moved to the `image.bbclass` file.
 Recipes that inherit `isar-image` should be modified to inherit from `image`
@@ -724,12 +724,12 @@ For example, If `KERNEL_NAME` is configured as `foo` for arm64, now
 generated. This will help to have multiple versions of linux-libc-dev packages
 available for respective bsps in apt feeds.
 
-### ISAR APT Repository
+### Isar APT Repository
 
 Optional fields of the isar-apt repo can be controlled by adding to the
 `ISAR_APT_OPT_FIELD` map. Example: `ISAR_APT_OPT_FIELD[Origin]="isar"`.
 
-Changes in next
+Changes in v1.0
 ---------------
 
 ### Drop unused container image format `oci`
@@ -972,3 +972,101 @@ we introduce the variables ``MMAPTOPT_NOEXPKEYSIGN`` and ``DISTRO_MM_OPTS``.
 While the former provides an argument to disable the key expiry checking, the
 latter allows users to inject custom options into ``mmdebstrap``. For details,
 see ``man mmdebstrap``. Use with care!
+
+### Provide additional fragments via KERNEL_CONFIG_FRAGMENTS
+
+Custom kernel builds can now inject config fragments into the build which were
+not provided via individual SRC_URI entries. If a kernel source tree contains a
+fragment, this can be specified via adding `${S}/path/to/fragment.cfg` to
+`KERNEL_CONFIG_FRAGMENTS`. If a fragment was checked out into ${WORKDIR} as
+part of a repository, a tarball, or some other directory structure, just
+specify it relative to ${WORKDIR} in `KERNEL_CONFIG_FRAGMENTS`.
+
+### Change DEPLOY_DIR_IMAGE path and artifacts naming
+
+Change DEPLOY_DIR_IMAGE from ${DEPLOY_DIR}/images/${MACHINE} to
+${DEPLOY_DIR}/images/${MACHINE}/${DISTRO}-${IMAGE_PN}.
+
+When building different distros with the same machine the following
+error occurs:
+
+do_copy_boot_files: The recipe isar-image-base is trying to install
+files into a shared area when those files already exists. It happens
+when some files have the same names (e.g., dtb files) for different
+distros.
+
+To prevent such collisions, image artifacts are now deployed into a
+distro- and image-specific subdirectory.
+
+Additionally, artifact filenames have been shortened by removing the
+${DISTRO} and ${IMAGE_PN} prefix, since this information is now
+encoded in the directory path.
+
+Example 1: Build isar-image-base (phyboard-mira, debian-bookworm)
+Under "build/tmp/deploy/images/":
+Before:
+phyboard-mira/imx6q-phytec-mira-rdk-nand.dtb
+phyboard-mira/isar-image-base-debian-bookworm-phyboard-mira-initrd.img
+phyboard-mira/isar-image-base-debian-bookworm-phyboard-mira-vmlinuz
+phyboard-mira/isar-image-base-debian-bookworm-phyboard-mira.dpkg_status
+phyboard-mira/isar-image-base-debian-bookworm-phyboard-mira.ubi
+
+After:
+phyboard-mira/debian-bookworm-isar-image-base/imx6q-phytec-mira-rdk-nand.dtb
+phyboard-mira/debian-bookworm-isar-image-base/initrd.img
+phyboard-mira/debian-bookworm-isar-image-base/vmlinuz
+phyboard-mira/debian-bookworm-isar-image-base/phyboard-mira.dpkg_status
+phyboard-mira/debian-bookworm-isar-image-base/phyboard-mira.ubi
+
+Example 2: Build isar-image-ci (qemuamd64, debian-bookworm)
+Under "build/tmp/deploy/images/":
+Before:
+qemuamd64/isar-image-ci-debian-bookworm-qemuamd64-initrd.img
+qemuamd64/isar-image-ci-debian-bookworm-qemuamd64-vmlinuz
+qemuamd64/isar-image-ci-debian-bookworm-qemuamd64.dpkg_status
+qemuamd64/isar-image-ci-debian-bookworm-qemuamd64.manifest
+qemuamd64/isar-image-ci-debian-bookworm-qemuamd64.wic
+qemuamd64/isar-image-ci-debian-bookworm-qemuamd64.wic.bmap
+qemuamd64/isar-image-ci-debian-bookworm-qemuamd64.wic.manifest
+
+After:
+qemuamd64/debian-bookworm-isar-image-ci/initrd.img
+qemuamd64/debian-bookworm-isar-image-ci/vmlinuz
+qemuamd64/debian-bookworm-isar-image-ci/qemuamd64.dpkg_status
+qemuamd64/debian-bookworm-isar-image-ci/qemuamd64.manifest
+qemuamd64/debian-bookworm-isar-image-ci/qemuamd64.wic
+qemuamd64/debian-bookworm-isar-image-ci/qemuamd64.wic.bmap
+qemuamd64/debian-bookworm-isar-image-ci/qemuamd64.wic.manifest
+
+Artifacts that do not belong to a full image (e.g. isar-image-base,
+isar-image-ci) remain unchanged. For example, a customized initramfs
+built independently is not affected.
+
+This change affects the location and naming of build artifacts and must
+be taken into account by downstream users.
+
+Note that this approach differs from OpenEmbedded.
+
+OpenEmbedded typically avoids artifact collisions in multiconfig builds
+by using separate TMPDIRs per configuration, resulting in multiple
+build directories such as tmp-qemuarm64 and tmp-qemuarm64customized. In
+this model, artifacts with identical names but different contents do
+not cause conflicts because they reside in their own isolated build
+directories.
+
+If multiple configurations are intentionally configured to share the
+same TMPDIR in OpenEmbedded, conflicts may occur and are not handled by
+OE. Artifacts with the same name overwrite each other, leading to
+incorrect build results.
+
+Changes in v1.1
+---------------
+
+### Revert "Change DEPLOY_DIR_IMAGE path and artifacts naming"
+
+The DEPLOY_DIR_IMAGE path and artifacts naming changes introduced in
+13cb77dd (included in Isar v1.0) have been reverted. Deployment paths
+and artifact names are the same as pre-v1.0.
+
+Changes in next
+---------------

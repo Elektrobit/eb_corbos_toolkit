@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/u/ubus/ubus-dbgsym_20250807_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "687e5da215d31b33f50f5f8f0436e186"
-SRC_URI[deb0.sha1sum] = "42b1a44eec61365cbf182812343ac3755fa822ed"
-SRC_URI[deb0.sha256sum] = "4cb3df4f02f1145ebf333f8a7be05f5fc0e2768e2afe84c7b0db48c30c6df84a"
+SRC_URI[deb0.md5sum] = "a9989e7b2cbe64c889da754fd1597b3c"
+SRC_URI[deb0.sha1sum] = "0139de520bafbe0093f3402d9779b2125634f02d"
+SRC_URI[deb0.sha256sum] = "8262a74e6d507238a5eb017a73f37137bb930c80b8afeb9305c4481902162447"
 
 RDEPENDS = " \
     ubus \

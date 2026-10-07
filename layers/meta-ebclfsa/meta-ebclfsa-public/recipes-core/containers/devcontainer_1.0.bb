@@ -21,6 +21,7 @@ IMAGE_INSTALL:append = " \
     apt-repo-config \
     cmake \
     ebcl-reposync \
+    ebclfsa-cmake \
     gdb-multiarch \
     iputils-ping \
     less \
@@ -31,10 +32,15 @@ IMAGE_INSTALL:append = " \
     opengrep \
     patchelf \
     procps \
+    pre-commit \
+    pre-commit-hooks \
     python3-pip \
     qemu-system-arm \
+    ripgrep \
+    shellcheck \
     sshpass \
     tmux \
     vim \
     pv \
+    uidmap \
 "

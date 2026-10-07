@@ -1,0 +1,12 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - "examples/package_rebuild/kas/preferred-versions.yml"
+
+repos:
+  meta-example-package-rebuild:
+    path: "examples/package_rebuild/meta-example-package-rebuild"
+    layers:
+      .:

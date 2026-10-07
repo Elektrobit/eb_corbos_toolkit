@@ -24,8 +24,8 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/c/cominit/cominit-tests_0.12.2_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "90bf1f490c145bd39eb0a984ebf8833a"
-SRC_URI[deb0.sha1sum] = "540035ddb619d09ab01d9092347dfd193e06d283"
-SRC_URI[deb0.sha256sum] = "3f8b38b71f1afc678556799311ff565812f5e6e224324aff6c9de55a7fc50ae3"
+SRC_URI[deb0.md5sum] = "23dd234710895c4920c0a5abf553f581"
+SRC_URI[deb0.sha1sum] = "74d0e7cf533173f7dae85ee8360aef2d14c2c388"
+SRC_URI[deb0.sha256sum] = "90e41ad8be0f8d5b76ec9afda4c12fcbb5dd33c3c89ab36f44a3f4a782744102"
 
 

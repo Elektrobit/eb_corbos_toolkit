@@ -28,21 +28,7 @@ EBCL_BOOTLOADER = "1"
 
 require recipes-images/common/ebclfsa-common.inc
 
-# Additional fastdev-specific system packages
-IMAGE_INSTALL:append = " \
-    apt-repo-config \
-    cron \
-    cryptsetup-bin \
-    fdisk \
-    gdbserver \
-    init-system-helpers \
-    iptables \
-    kmod \
-    ntpsec-ntpdate \
-    openssh-client \
-    psmisc \
-    vim \
-"
+require recipes-images/common/ebclfsa-dev.inc
 
 # Additional fastdev-specific config packages
 IMAGE_INSTALL:append = " \
@@ -64,67 +50,15 @@ IMAGE_INSTALL:append = " \
     ebclfsa-li-demo \
 "
 
-# Graphics: DRM/Mesa — only when 'graphics' feature is enabled
+# Add included features to rootfs
 IMAGE_INSTALL:append = " \
-    ${@ bb.utils.contains('EBCLFSA_DISTRO_FEATURES', 'graphics', ' \
-    libdrm2 \
-    libgbm1 \
-    libegl1 \
-    libgles2 \
-    libgl1-mesa-dri \
-    mesa-utils \
-    kmscube \
-    ', '', d)} \
-"
-
-# Wayland compositor: Weston + udev + crinit services — only when 'compositor' feature is enabled
-IMAGE_INSTALL:append = " \
-    ${@ bb.utils.contains('EBCLFSA_DISTRO_FEATURES', 'compositor', ' \
-    weston \
-    xwayland \
-    udev \
-    ebclfsa-base-crinit-weston \
-    ', '', d)} \
-"
-
-# Qt6: runtime libraries and examples — only when 'qt' feature is enabled
-IMAGE_INSTALL:append = " \
-    ${@ bb.utils.contains('EBCLFSA_DISTRO_FEATURES', 'qt', ' \
-    qt6-wayland \
-    libqt6qml6 \
-    libqt6quick6 \
-    libqt6widgets6 \
-    qml6-module-qtquick \
-    qml6-module-qtquick-controls \
-    qml6-module-qtquick-layouts \
-    qml6-module-qtquick-window \
-    qt6-base-examples \
-    ', '', d)} \
+    ${EBCLFSA_FASTDEV_FEATURES_CONTENT} \
 "
 
 UNWANTED_PKGS = " \
     linux-firmware \
     wireless-regdb \
 "
-
-SDK_INSTALL:append = " \
-    lisa-elf-enabler \
-    lisa-libc-tools-clang \
-    clang-20 \
-    lld-20 \
-    libz3-4 \
-"
-
-DEPENDS:append = " libclang-rt-20-dev"
-ROOTFS_PACKAGES:class-sdk += "libclang-rt-20-dev:arm64"
-
-# Add user and group for elos
-GROUPS += "elos"
-GROUP_elos[flags] = "system"
-
-USERS += "elos"
-USER_elos[gid] = "elos"
-USER_elos[shell] = "/bin/false"
 
 # Do not update fstab when creating wic images
 WIC_CREATE_EXTRA_ARGS:append = " --no-fstab-update"

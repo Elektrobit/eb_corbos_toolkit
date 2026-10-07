@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Copyright 2026 Elektrobit. All rights reserved.
+
+# This is a simple template for running custom postStartCommand lifecycle commands.
+#
+# Usage:
+# (1) Copy this file to post_start_hook.sh in the same directory
+# (2) Ensure it has the executable flag set (chmod +x post_start_hook.sh)
+# (3) Add commands that you want to run as postStartCommand to the script

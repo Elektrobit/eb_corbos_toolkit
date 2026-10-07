@@ -1,4 +1,4 @@
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (C) 2015-2018 ilbers GmbH
 
 inherit dpkg-source
@@ -10,6 +10,12 @@ DPKG_BUILD_TIMEOUT ?= "150"
 dpkg_runbuild[vardepsexclude] += "${DPKG_BUILD_TIMEOUT}"
 
 DPKG_PREBUILD_ENV_FILE="${WORKDIR}/dpkg_prebuild.env"
+
+# Build path inside the schroot. Left empty, sbuild would use a random
+# /build/<package>-XXXXXX directory, which leaks into the build artifacts.
+# Keyed on PN, not on the source package, because recipe variants such as
+# ${PN}-native share DEBIAN_SOURCE and are built concurrently.
+SBUILD_BUILD_PATH ?= "/build/${PN}"
 
 # bitbake variables that should be passed into sbuild env
 # Note: must not have any logical influence on the generated package
@@ -123,7 +129,8 @@ dpkg_runbuild() {
         --finished-build-commands="rm -f ${deb_dir}/sbuild-build-depends-*-dummy_*.deb" \
         --finished-build-commands="find ${deb_dir} -maxdepth 1 -type f -name '*.deb' -print -exec cp ${CP_FLAGS} -t ${ext_deb_dir}/ {} +" \
         --finished-build-commands="cp /var/log/dpkg.log ${ext_root}/dpkg_partial.log" \
-        --build-path="" --build-dir=${WORKDIR} --dist="${DEBDISTRONAME}" ${DSC_FILE}
+        --build-path="${SBUILD_BUILD_PATH}" --build-dir=${WORKDIR} \
+        --dist="${DEBDISTRONAME}" ${DSC_FILE}
 
     sbuild_dpkg_log_export "${WORKDIR}/rootfs/dpkg_partial.log"
     deb_dl_dir_export "${WORKDIR}/rootfs" "${distro}"

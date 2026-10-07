@@ -1,0 +1,71 @@
+{
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23
+    },
+    "include": [
+        "/usr/share/cmake/ebclfsa/presets/ebclfsaBasePreset.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "base-hi",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "IS_FASTDEV": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                }
+            }
+        },
+        {
+            "name": "fastdev-hi-app-qemuarm64",
+            "inherits": "base-hi",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/compositions/toolchain-clang-hi-arm64.cmake",
+            "environment": {
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-ebcl-qemuarm64"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT}"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-qemuarm64"
+                }
+            }
+        },
+        {
+            "name": "fastdev-hi-app-rpi4b",
+            "inherits": "base-hi",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/compositions/toolchain-clang-hi-arm64.cmake",
+            "environment": {
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-rpi4b"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT}"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-rpi4b"
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "fastdev-hi-app-qemuarm64",
+            "configurePreset": "fastdev-hi-app-qemuarm64",
+            "inherits": "base"
+        },
+        {
+            "name": "fastdev-hi-app-rpi4b",
+            "configurePreset": "fastdev-hi-app-rpi4b",
+            "inherits": "base"
+        }
+    ]
+}

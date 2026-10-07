@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (c) Siemens AG, 2020-2023
 #
 # SPDX-License-Identifier: MIT
@@ -20,7 +20,23 @@ case "$1" in
 	;;
 esac
 
-if [ -z $(which patchelf 2>/dev/null) ]; then
+# Prefer the patchelf shipped inside the SDK itself. It lives inside the
+# tree that is about to be rewritten by the loop below, so operate on a
+# copy instead of the original, and run that copy directly: it must keep
+# using its own (unmodified) interpreter, since - like every other SDK
+# host tool binary - it relies on the host's libc.so.6 until this script
+# has run, and forcing it through a different loader would reintroduce
+# the interpreter/libc.so.6 mismatch this script fixes for every other
+# binary.
+sdk_patchelf=${sdkroot}/usr/bin/patchelf
+if [ -x "${sdk_patchelf}" ]; then
+	patchelf_tmpdir=$(mktemp -d)
+	cp "${sdk_patchelf}" "${patchelf_tmpdir}/patchelf"
+	trap 'rm -rf "${patchelf_tmpdir}"' EXIT
+	patchelf() {
+		"${patchelf_tmpdir}/patchelf" "$@"
+	}
+elif [ -z "$(which patchelf 2>/dev/null)" ]; then
 	echo "Please install 'patchelf' package first."
 	exit 1
 fi
@@ -28,6 +44,15 @@ fi
 echo -n "Adjusting path of SDK to '${new_sdkroot}'... "
 
 sdk_rpath="${new_sdkroot}/usr/lib:${new_sdkroot}/usr/lib/${arch}-linux-gnu"
+
+# Make the SDK's own libc.so.6 visible on the rpath again. It is hidden by
+# default (moved into this subdirectory during the SDK build) so unmodified
+# binaries fall back to the host's libc.so.6, matching their untouched host
+# loader.
+sdk_libc_dir="${sdkroot}/usr/lib/${arch}-linux-gnu"
+if [ -f "${sdk_libc_dir}/sdk-libc/libc.so.6" ] && [ ! -e "${sdk_libc_dir}/libc.so.6" ]; then
+	ln -s sdk-libc/libc.so.6 "${sdk_libc_dir}/libc.so.6"
+fi
 
 for binary in $(find ${sdkroot}/usr/bin ${sdkroot}/usr/sbin \
 	${sdkroot}/usr/lib/gcc* ${sdkroot}/usr/libexec/gcc* \

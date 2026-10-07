@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+
+# Copyright 2025 Elektrobit. All rights reserved.
+
+# Enable hardening flags
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+ifeq ($(DEB_HOST_ARCH),arm64)
+CMAKE_ARGS += -DCMAKE_TOOLCHAIN_FILE=/usr/share/cmake/ebclfsa/toolchain/compositions/toolchain-gcc-li-arm64.cmake
+export TOOLCHAIN_BASE=/usr/share/cmake/ebclfsa/toolchain
+endif
+
+override_dh_auto_configure:
+	dh_auto_configure -- $(CMAKE_ARGS)

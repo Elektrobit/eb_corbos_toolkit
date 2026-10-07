@@ -4,7 +4,7 @@
     "name": "EB corbos Toolkit",
     // the container is updated by CI directly "in place" with the same tag,
     // so we always need to pull the latest image manually before starting the container
-    "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v18",
+    "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v22",
     // set the tag to local if you are using a locally built image
     // "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:local",
     "initializeCommand": ".devcontainer/scripts/initialize.sh",
@@ -12,11 +12,14 @@
         "Setup kas git config": ".devcontainer/scripts/setup_kas_gitconfig.sh",
         "Check credentials": ".devcontainer/scripts/setup_credentials.sh --check",
         "Setup target connections": ".devcontainer/scripts/setup_targets.sh",
-        "Entering container": ".devcontainer/scripts/enter_container.sh"
+        "Entering container": ".devcontainer/scripts/enter_container.sh",
+        "Run optional user postStartCommand": "if [ -f .devcontainer/post_start_hook.sh ]; then bash .devcontainer/post_start_hook.sh; fi"
     },
     "postCreateCommand": {
         "Setup binfmt support": ".devcontainer/scripts/setup_binfmt_support.sh",
-        "Setup persistent bash history": ".devcontainer/scripts/setup_command_history.sh"
+        "Setup persistent bash history": ".devcontainer/scripts/setup_command_history.sh",
+        "Setup agent worktrees": "sudo mkdir -p /workspace.worktrees && sudo chown developer:developer /workspace.worktrees",
+        "Run optional user postCreateCommand": "if [ -f .devcontainer/post_create_hook.sh ]; then bash .devcontainer/post_create_hook.sh; fi"
     },
     "containerEnv": {
         "GITCONFIG_FILE": "/workspace/.devcontainer/kas.gitconfig",
