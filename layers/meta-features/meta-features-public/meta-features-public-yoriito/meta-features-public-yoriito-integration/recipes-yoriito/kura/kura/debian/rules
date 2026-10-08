@@ -1,0 +1,48 @@
+#!/usr/bin/make -f
+# Copyright 2026 Elektrobit. All rights reserved.
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+# Keep cargo's registry/cache inside the build tree.
+export CARGO_HOME = $(CURDIR)/debian/cargo_home
+
+# Cross-compile the Rust binary for the host (target) architecture. The native
+# rustc/cargo run on the build machine (amd64) while libstd-rust-dev for the
+# host arch provides /usr/lib/rustlib/aarch64-unknown-linux-gnu. Point cargo's
+# linker (and any C build scripts) at the arm64 cross toolchain.
+export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = aarch64-linux-gnu-gcc
+export CC_aarch64_unknown_linux_gnu = aarch64-linux-gnu-gcc
+export CXX_aarch64_unknown_linux_gnu = aarch64-linux-gnu-g++
+
+%:
+	dh $@
+
+# Rust project: build with cargo instead of the auto-detected build system.
+# ${S} is the repository root; the kura crate lives in the kura/ subdirectory.
+override_dh_auto_configure:
+
+override_dh_auto_build:
+	cd kura && cargo build --release --target aarch64-unknown-linux-gnu
+
+override_dh_auto_test:
+
+override_dh_gencontrol:
+	@set -eu; \
+	static_built_using=$$(cd kura && cargo tree --locked --offline \
+		--target aarch64-unknown-linux-gnu \
+		--edges normal,no-proc-macro \
+		--prefix none --format '{p}' | \
+		awk '$$1 != "kura" && $$2 ~ /^v/ { name = tolower($$1); version = $$2; sub(/^v/, "", version); gsub(/_/, "-", name); key = name "@" version; if (!seen[key]++) { printf "%s%s (= %s)", separator, name, version; separator = ", " } } END { print "" }'); \
+	test -n "$$static_built_using"; \
+	dh_gencontrol -- -DStatic-Built-Using="$$static_built_using"
+
+override_dh_auto_install:
+	install -D -m0755 kura/target/aarch64-unknown-linux-gnu/release/kura debian/kura/usr/bin/kura
+	install -d debian/kura/etc/yoriito/viss
+	install -m0644 kura/config.yml debian/kura/etc/yoriito/viss/config.yml
+	install -m0644 kura/assets/server.json debian/kura/etc/yoriito/viss/server.json
+	sed -i 's|\(vss_path:\).*|\1 vss.json|g' debian/kura/etc/yoriito/viss/config.yml
+	sed -i 's|\(server_path:\).*|\1 server.json|g' debian/kura/etc/yoriito/viss/config.yml
+	# The fastdev image uses crinit (not systemd) as its init system, so ship
+	# the crinit task file that starts the VISS server. It is installed into the
+	# crinit task directory scanned by the default series file.
+	install -D -m0644 debian/kura.crinit debian/kura/etc/crinit/crinit.d/kura.crinit

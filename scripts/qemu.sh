@@ -42,6 +42,7 @@ NETWORK_ARGS="-device virtio-net-device,netdev=net0 -netdev user,id=net0,net=192
 INITRD=""
 KERNEL=""
 declare -g -a KERNEL_ARGS
+declare -g -a ICOUNT_ARGS
 
 # Source delivery-specific configuration if available
 for VARIANT in "${QEMU_SH_INCLUDES}"/*; do
@@ -93,6 +94,7 @@ boot_qemu()
     verbose "  MEM=${MEM}"
     verbose "  KERNEL=${KERNEL}"
     verbose "  KERNEL_ARGS=${KERNEL_ARGS[*]:-}"
+    verbose "  ICOUNT_ARGS=${ICOUNT_ARGS[*]:-}"
     verbose "  DISK_ARGS=${DISK_ARGS}"
     verbose "  NETWORK_ARGS=${NETWORK_ARGS}"
     verbose "  EXTRA_ARGS=${EXTRA_ARGS:-}"
@@ -116,7 +118,7 @@ boot_qemu()
     local qemu_cmd="${QEMU_CMD:-qemu-system-aarch64}"
     exec ${qemu_cmd} -m "${MEM}" -machine "${MACHINE}" -cpu "${CPU}" \
         -smp "${SMP}" -kernel "${KERNEL}" ${INITRD} "${KERNEL_ARGS[@]}" ${DISK_ARGS} \
-        ${NETWORK_ARGS} ${EXTRA_ARGS:-} ${graphics_args} ${display_args}
+        ${NETWORK_ARGS} "${ICOUNT_ARGS[@]}" ${EXTRA_ARGS:-} ${graphics_args} ${display_args}
 }
 
 # Check commandline arguments

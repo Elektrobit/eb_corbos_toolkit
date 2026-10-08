@@ -1,0 +1,4 @@
+Name: dltconf
+Link: /etc/dlt.conf
+Alternative: /etc/dlt.conf.yoriito
+Priority: 100

@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-coredump_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "e6d0a97c1b325812acdfe56a28be47c5"
-SRC_URI[deb0.sha1sum] = "8aaec19d7edb053ebd65ab635a049065cde244cf"
-SRC_URI[deb0.sha256sum] = "f0977ae69f0be56e56b4b7c261bb7a1f46388bd2150a1f0bd13ff9fbbd8a15ba"
+SRC_URI[deb0.md5sum] = "073e6bce9fed714c21a17a7d7e406b73"
+SRC_URI[deb0.sha1sum] = "618b12291c2a25eb20009fb6027f50c957f5e2a5"
+SRC_URI[deb0.sha256sum] = "5e3f183af4582533328c08e4d5bff5ad08019b4365872906673be551e0e83fc1"
 
 RDEPENDS = " \
     libc6 \

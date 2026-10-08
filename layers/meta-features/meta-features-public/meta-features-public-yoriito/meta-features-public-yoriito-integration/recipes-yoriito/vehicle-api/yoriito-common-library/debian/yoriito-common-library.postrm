@@ -1,0 +1,17 @@
+#!/bin/sh
+# Restore dlt-daemon's original /etc/dlt.conf when this package is removed by
+# undoing the diversion set up in the preinst. The #DEBHELPER# token expands to
+# the update-alternatives removal snippet, which must run first so that the
+# managed /etc/dlt.conf symlink is gone before the diverted file is renamed back.
+set -e
+
+#DEBHELPER#
+
+case "$1" in
+    remove|purge|disappear)
+        dpkg-divert --package yoriito-common-library --remove --rename \
+            --divert /etc/dlt.conf.dlt-daemon /etc/dlt.conf
+        ;;
+esac
+
+exit 0

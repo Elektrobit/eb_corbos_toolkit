@@ -1,0 +1,38 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - kas/features/public/compositor.yml
+
+local_conf_header:
+  qt_feature: |
+    QT_FEATURE_EXAMPLE_INTEGRATION = " \
+      qt6-wayland \
+      libqt6qml6 \
+      libqt6quick6 \
+      libqt6widgets6 \
+      qml6-module-qtquick \
+      qml6-module-qtquick-controls \
+      qml6-module-qtquick-layouts \
+      qml6-module-qtquick-window \
+      qt6-base-examples \
+    "
+
+    QT_FEATURE_EXAMPLE_INTEGRATION_SIZE_MB = "128"
+
+    # Additional feature content
+    EBCLFSA_FASTDEV_FEATURES_CONTENT += "${QT_FEATURE_EXAMPLE_INTEGRATION}"
+    # Currently nothing for EBCLFSA_LIVM_FEATURES_CONTENT
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_CONTENT
+    # Currently nothing for EBCLFSA_FASTDEV_FEATURE_SDK_CONTENT
+    # Currently nothing for EBCLFSA_LIVM_FEATURE_SDK_CONTENT
+    # Currently nothing for EBCLFSA_HIVM_FEATURE_SDK_CONTENT
+
+    # Partition growth settings for different rootfs types in Megabytes
+    EBCLFSA_FASTDEV_FEATURES_ROOTFS_PARTITION_GROWTH_MB += " ${QT_FEATURE_EXAMPLE_INTEGRATION_SIZE_MB}"
+    # Currently nothing for EBCLFSA_LIVM_FEATURES_ROOTFS_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_ROOTFS_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_FASTDEV_FEATURES_DATA_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_LIVM_FEATURES_DATA_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_DATA_PARTITION_GROWTH_MB

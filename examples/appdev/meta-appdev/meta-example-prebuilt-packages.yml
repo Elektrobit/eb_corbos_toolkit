@@ -1,0 +1,16 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+layer: "meta-example-prebuilt-packages"
+layer_priority: 5
+repos:
+  - name: "EB Upstream Baseline"
+    url: "https://linux.elektrobit.com/ebclfsa/test"
+    distributions:
+      - "ebcl"
+    components:
+      - "trixie_main"
+    architectures:
+      - "amd64"
+      - "arm64"
+    packages:
+      - "hello" # GNU Hello example

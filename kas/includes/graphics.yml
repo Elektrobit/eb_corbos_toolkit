@@ -1,8 +1,0 @@
-# Copyright 2026 Elektrobit. All rights reserved.
-
-header:
-  version: 18
-
-local_conf_header:
-  graphics: |
-    EBCLFSA_DISTRO_FEATURES:append = " graphics"

@@ -1,0 +1,29 @@
+#
+# Copyright 2026 Elektrobit. All rights reserved.
+
+# Config file for the ebcl-reposync tool
+# Upstream: Debian Trixie (CIP Core preferred)
+# Packages marked [CIP] are maintained long-term by CIP Core.
+# Packages marked [Trixie] rely on standard Debian Trixie maintenance only.
+---
+layer: "meta-features-public-yoriito-packages"
+
+repos:
+  - name: "EB Upstream Baseline"
+    url: "https://artifactory.elektrobit.com/eb_corbos_linux_product-snapshots-generic-denue/ebcl_input_snapshots/ebcl_2.x_trixie/2026-08-10/upstream/packages"
+    distributions:
+      - "upstream_baseline"
+    components:
+      - "trixie_main"
+    architectures:
+      - "amd64"
+      - "arm64"
+    packages:
+      - "libprotobuf-dev" # [Trixie] Protocol Buffers library (required by gRPC)
+      - "protobuf-compiler" # [Trixie] Protocol Buffers compiler (required by gRPC)
+      - "protobuf-compiler-grpc" # [Trixie] Protocol Buffers compiler plugin for gRPC
+      - "libgrpc++-dev" # [Trixie] gRPC C++ library (required by gRPC)
+      - "libgrpc++1.51" # [Trixie] gRPC C++ library (required by gRPC)
+      - "dlt-daemon" # [Trixie] DLT logging daemon
+      - "libdlt-dev" # [Trixie] DLT development files
+      - "libgit2-1.9" # [Trixie] Git library (required by cargo)

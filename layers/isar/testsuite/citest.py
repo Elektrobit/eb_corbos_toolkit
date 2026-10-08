@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (C) 2022-2025 ilbers GmbH
 # Copyright (C) 2022-2025 Siemens AG
 #
@@ -415,6 +415,16 @@ class CrossTest(CIBaseTest):
         self.perform_build_test(targets, lines=lines,
                                 image_install='test-all-deponlycross')
 
+    def test_cross_mira_trixie(self):
+        targets = [
+            'mc:phyboard-mira-trixie:isar-image-base',
+        ]
+
+        self.init()
+        self.move_in_build_dir('tmp', 'tmp_cross')
+        self.perform_build_test(targets)
+        self.move_in_build_dir('tmp', 'tmp_cross_mira_trixie')
+
 class PrebuiltTest(CIBaseTest):
     """
     Tests associated with prebuilt artifacts (containers, debs).
@@ -459,6 +469,7 @@ class KernelTests(CIBaseTest):
         """Targets that build a custom kernel"""
         targets = [
             'mc:de0-nano-soc-bullseye:isar-image-base',
+            'mc:de0-nano-soc-trixie:isar-image-base',
             'mc:stm32mp15x-bullseye:isar-image-base',
             'mc:phyboard-mira-bookworm:isar-image-base',
         ]
@@ -677,6 +688,48 @@ class WicTest(CIBaseTest):
         )
 
 
+class DtbDeployTest(CIBaseTest):
+
+    """
+    Build some targets potentially causing DTB deploy issues.
+
+    :avocado: tags=dtbdeploy,full
+    """
+
+    def test_dtb_deploy_distros(self):
+        """
+        Cover case: Same machine, different distros
+        """
+        targets = [
+            'mc:phyboard-mira-bullseye:isar-image-base',
+            'mc:phyboard-mira-bookworm:isar-image-base',
+        ]
+
+        self.init()
+        self.move_in_build_dir('tmp', 'tmp_before_dtbdeploy')
+        try:
+            self.perform_build_test(targets, image_install='')
+        except exceptions.TestFail:
+            self.cancel('KFAIL')
+
+    def test_dtb_deploy_images(self):
+        """
+        Cover case: Same machine/distro, different images
+        """
+        targets = [
+            'mc:phyboard-mira-bookworm:isar-image-base',
+            'mc:phyboard-mira-bookworm:isar-image-ci',
+        ]
+
+        self.init()
+        try:
+            self.perform_build_test(targets, image_install='')
+        except exceptions.TestFail:
+            self.cancel('KFAIL')
+        finally:
+            self.move_in_build_dir('tmp', 'tmp_dtbdeploy')
+
+
 class NoCrossTest(CIBaseTest):
 
     """
@@ -700,16 +753,20 @@ class NoCrossTest(CIBaseTest):
             'mc:hikey-bullseye:isar-image-base',
             'mc:virtualbox-bullseye:isar-image-base',
             'mc:virtualbox-bookworm:isar-image-base',
+            'mc:virtualbox-trixie:isar-image-base',
             'mc:bananapi-bullseye:isar-image-base',
             'mc:bananapi-bookworm:isar-image-base',
+            'mc:bananapi-trixie:isar-image-base',
             'mc:nanopi-neo-bullseye:isar-image-base',
             'mc:nanopi-neo-bookworm:isar-image-base',
+            'mc:nanopi-neo-trixie:isar-image-base',
             'mc:qemuamd64-focal:isar-image-ci',
             'mc:qemuamd64-bookworm:isar-image-ci',
             'mc:qemuamd64-iso-bookworm:isar-image-ci',
             'mc:qemui386-bookworm:isar-image-base',
             'mc:qemumipsel-bookworm:isar-image-ci',
             'mc:hikey-bookworm:isar-image-base',
+            'mc:hikey-trixie:isar-image-base',
             'mc:beagleplay-bookworm:isar-image-base',
             'mc:qemuarm64-noble:isar-image-base',
             'mc:qemuamd64-noble:isar-image-base',
@@ -1026,6 +1083,7 @@ class ContainerImageTest(CIBaseTest):
             'mc:container-amd64-buster:isar-image-base',
             'mc:container-amd64-bullseye:isar-image-base',
             'mc:container-amd64-bookworm:isar-image-base',
+            'mc:container-amd64-trixie:isar-image-base',
         ]
 
         self.init()

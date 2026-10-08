@@ -5,7 +5,7 @@ DESCRIPTION = "Code search, linting, and rewriting tool"
 HOMEPAGE = "https://github.com/opengrep/opengrep"
 SECTION = "devtools"
 LICENSE = "LGPL-2.1-only"
-MAINTAINER = "Elektrobit <info@elektrobit.com>"
+MAINTAINER = "OpenGrep <opengrep@opengrep.dev>"
 
 inherit dpkg-raw
 

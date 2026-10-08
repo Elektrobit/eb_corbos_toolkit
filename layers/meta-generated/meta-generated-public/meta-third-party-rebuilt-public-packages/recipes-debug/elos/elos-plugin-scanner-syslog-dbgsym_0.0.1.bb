@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-syslog-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "4a4f46320347e7d42255642a46b905d0"
-SRC_URI[deb0.sha1sum] = "90b5387cb8333fae27dcf78729a0021c071f66a6"
-SRC_URI[deb0.sha256sum] = "1f72872e3b23a20f0bd7b85aa59794d17c1d6a42b700f213492bc204d9358580"
+SRC_URI[deb0.md5sum] = "51c014ea9a2d6063785c798990541e1a"
+SRC_URI[deb0.sha1sum] = "ddac0013b6ac4ffc38f74b4b33938d9ec1a686c7"
+SRC_URI[deb0.sha256sum] = "2bb6f14a05858978d3b776f17108e94f0dbbbf37705a4d153e7fa138520e65e2"
 
 RDEPENDS = " \
     elos-plugin-scanner-syslog \

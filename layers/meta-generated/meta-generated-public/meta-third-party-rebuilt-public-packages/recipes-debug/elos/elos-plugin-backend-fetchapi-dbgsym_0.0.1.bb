@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-backend-fetchapi-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "1edb1e8b90e35753d007d55bedeab318"
-SRC_URI[deb0.sha1sum] = "6d1799b519361d80392583b2f54783ee1b785926"
-SRC_URI[deb0.sha256sum] = "aa087a185507d28a71e7cb7dcfc58da279917fe1e9ca65c64b8ac7748cc93b7f"
+SRC_URI[deb0.md5sum] = "34f7fb4851949451ce433f4a77c090d3"
+SRC_URI[deb0.sha1sum] = "c8a06806fc981ac8950f6017873b7a5b4a04eb80"
+SRC_URI[deb0.sha256sum] = "7dfb0902683172c2892835e6f102e274dab5c15506aabb5fc21a2d9c157b5a43"
 
 RDEPENDS = " \
     elos-plugin-backend-fetchapi \

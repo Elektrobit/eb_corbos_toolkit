@@ -1,0 +1,12 @@
+[Unit]
+Description=Yoriito VISS Server: KURA
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/kura --config-file-path /etc/yoriito/viss/config.yml
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

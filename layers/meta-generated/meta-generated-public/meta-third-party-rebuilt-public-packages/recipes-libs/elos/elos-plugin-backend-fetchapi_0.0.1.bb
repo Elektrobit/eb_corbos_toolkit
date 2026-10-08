@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-backend-fetchapi_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "f633bfc360d1e0bdf118bb8116e490e8"
-SRC_URI[deb0.sha1sum] = "61eb32db6b5633563da62254aacf003aeb58d4de"
-SRC_URI[deb0.sha256sum] = "1525a504c08e78f316aa6a2979bdbd134ac3374a8bbcc6e13eabe93ed203c3df"
+SRC_URI[deb0.md5sum] = "503fd1a0ee6aa382a467ef4c460779d9"
+SRC_URI[deb0.sha1sum] = "54796c5f940b402764522b0bab33207a0a4dc33a"
+SRC_URI[deb0.sha256sum] = "37f1ad624a1a4cd05461c624c1746f750dd060b7ce5c5557c5e63466bc6139da"
 
 RDEPENDS = " \
     libelosplugin1 \

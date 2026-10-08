@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-kmsg_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "7af896174abd6a9474b2be2b2e38eabb"
-SRC_URI[deb0.sha1sum] = "a1f4c4302104b597a740e7f21213f4a69d5d08e0"
-SRC_URI[deb0.sha256sum] = "1eb8124079e66ace409d4ec0726a2ec0d95bd5e00d3f1fbb527cf77204c33914"
+SRC_URI[deb0.md5sum] = "5815f2fc6a46e747f113262d25a77e4c"
+SRC_URI[deb0.sha1sum] = "c3bc879f99841865c786df1d91bb1ee8a1a186c2"
+SRC_URI[deb0.sha256sum] = "31384d188eb32f6fb9320260228a8ba27cbc410f518386175c10be1a40347a8f"
 
 RDEPENDS = " \
     libc6 \

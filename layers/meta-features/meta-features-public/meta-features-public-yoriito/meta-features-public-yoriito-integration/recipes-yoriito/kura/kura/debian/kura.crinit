@@ -1,0 +1,13 @@
+# Yoriito VISS Server: KURA
+NAME = kura
+
+COMMAND = /usr/bin/kura --config-file-path /etc/yoriito/viss/config.yml
+
+# Wait for networking to be up before starting the server (crinit equivalent of
+# the systemd unit's "After=network.target").
+DEPENDS = @provided:network
+
+# Restart the daemon if it exits or fails (equivalent to systemd
+# "Restart=on-failure").
+RESPAWN = YES
+RESPAWN_RETRIES = -1

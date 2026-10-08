@@ -1,0 +1,34 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+
+local_conf_header:
+  graphics_feature: |
+    GRAPHICS_FEATURE_EXAMPLE_INTEGRATION = " \
+      libdrm2 \
+      libgbm1 \
+      libegl1 \
+      libgles2 \
+      libgl1-mesa-dri \
+      mesa-utils \
+      kmscube \
+    "
+
+    GRAPHICS_FEATURE_EXAMPLE_INTEGRATION_SIZE_MB = "128"
+
+    # Additional feature content
+    EBCLFSA_FASTDEV_FEATURES_CONTENT += "${GRAPHICS_FEATURE_EXAMPLE_INTEGRATION}"
+    # Currently nothing for EBCLFSA_LIVM_FEATURES_CONTENT
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_CONTENT
+    # Currently nothing for EBCLFSA_FASTDEV_FEATURE_SDK_CONTENT
+    # Currently nothing for EBCLFSA_LIVM_FEATURE_SDK_CONTENT
+    # Currently nothing for EBCLFSA_HIVM_FEATURE_SDK_CONTENT
+
+    # Partition growth settings for different rootfs types in Megabytes
+    EBCLFSA_FASTDEV_FEATURES_ROOTFS_PARTITION_GROWTH_MB += " ${GRAPHICS_FEATURE_EXAMPLE_INTEGRATION_SIZE_MB}"
+    # Currently nothing for EBCLFSA_LIVM_FEATURES_ROOTFS_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_ROOTFS_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_FASTDEV_FEATURES_DATA_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_LIVM_FEATURES_DATA_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_DATA_PARTITION_GROWTH_MB

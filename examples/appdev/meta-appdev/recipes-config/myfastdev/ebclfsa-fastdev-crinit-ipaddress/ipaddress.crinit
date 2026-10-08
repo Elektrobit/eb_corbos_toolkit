@@ -1,0 +1,10 @@
+NAME = ipaddress
+
+COMMAND = /usr/bin/bash -c "while [ ! -S /var/run/ubus/ubus.sock ]; do sleep 0.1; done"
+COMMAND = /usr/bin/ubus wait_for network.interface.lan
+COMMAND = /usr/bin/ubus call network.interface.lan up
+COMMAND = /usr/sbin/ip address
+
+PROVIDES = ""
+DEPENDS = @provided:network
+RESPAWN = NO

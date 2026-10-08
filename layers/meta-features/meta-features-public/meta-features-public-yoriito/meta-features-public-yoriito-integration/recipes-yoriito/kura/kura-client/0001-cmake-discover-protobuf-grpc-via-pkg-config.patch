@@ -1,0 +1,67 @@
+From: Elektrobit <info@elektrobit.com>
+Date: Tue, 11 Aug 2026 00:00:00 +0000
+Subject: [PATCH] cmake: discover protobuf/grpc via pkg-config
+
+The Debian protobuf and gRPC packages ship only pkg-config metadata and do
+not install upstream CMake package config files (protobuf-config.cmake /
+gRPCConfig.cmake). The gRPC-example common.cmake used find_package(... CONFIG
+REQUIRED), which therefore fails to configure. Switch the "system install"
+branch to locate the libraries with pkg-config (imported targets) and the
+protoc / grpc_cpp_plugin code generators with find_program, which also works
+when cross-compiling (the code generators come from the :native compiler
+packages while the libraries resolve to the host architecture).
+
+Forwarded: not-needed (Debian/ISAR system-package build integration)
+---
+diff --git a/client/cc/cmake/common.cmake b/client/cc/cmake/common.cmake
+index 3451d7f..7d5baaa 100644
+--- a/client/cc/cmake/common.cmake
++++ b/client/cc/cmake/common.cmake
+@@ -94,32 +94,21 @@ elseif(GRPC_FETCHCONTENT)
+     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
+   endif()
+ else()
+-  # This branch assumes that gRPC and all its dependencies are already installed
+-  # on this system, so they can be located by find_package().
++  # Debian/ISAR: the system protobuf and gRPC packages ship only pkg-config
++  # metadata (no CMake package config files), so discover the libraries via
++  # pkg-config instead of find_package(... CONFIG). protoc and the gRPC C++
++  # plugin are build tools and are always located via find_program (they come
++  # from the :native protobuf-compiler / protobuf-compiler-grpc packages when
++  # cross-compiling).
++  find_package(PkgConfig REQUIRED)
++  pkg_check_modules(PROTOBUF REQUIRED IMPORTED_TARGET protobuf)
++  pkg_check_modules(GRPCPP REQUIRED IMPORTED_TARGET grpc++)
++  message(STATUS "Using protobuf ${PROTOBUF_VERSION} and gRPC ${GRPCPP_VERSION} via pkg-config")
+
+-  # Find Protobuf installation
+-  # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
+-  option(protobuf_MODULE_COMPATIBLE TRUE)
+-  find_package(Protobuf CONFIG REQUIRED)
+-  message(STATUS "Using protobuf ${Protobuf_VERSION}")
++  set(_PROTOBUF_LIBPROTOBUF PkgConfig::PROTOBUF)
++  set(_GRPC_GRPCPP PkgConfig::GRPCPP)
++  find_library(_REFLECTION NAMES grpc++_reflection REQUIRED)
+
+-  set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
+-  set(_REFLECTION gRPC::grpc++_reflection)
+-  if(CMAKE_CROSSCOMPILING)
+-    find_program(_PROTOBUF_PROTOC protoc)
+-  else()
+-    set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
+-  endif()
+-
+-  # Find gRPC installation
+-  # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
+-  find_package(gRPC CONFIG REQUIRED)
+-  message(STATUS "Using gRPC ${gRPC_VERSION}")
+-
+-  set(_GRPC_GRPCPP gRPC::grpc++)
+-  if(CMAKE_CROSSCOMPILING)
+-    find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
+-  else()
+-    set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
+-  endif()
++  find_program(_PROTOBUF_PROTOC protoc REQUIRED)
++  find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin REQUIRED)
+ endif()

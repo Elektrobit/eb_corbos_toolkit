@@ -20,9 +20,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/u/ucode/ucode_0.0.20220322_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "18af3773726944c893346b9aecec9e6b"
-SRC_URI[deb0.sha1sum] = "aa48492f9301f0ed7badbfc1d860c8a317210fe0"
-SRC_URI[deb0.sha256sum] = "cb346f81f3599723ff9e8a7fcfa0b5e9df470918f67752855c7a36272e147404"
+SRC_URI[deb0.md5sum] = "a9f19a80383a8e5ed8cda9d05406ca18"
+SRC_URI[deb0.sha1sum] = "c5c497d038650685eceaebee065c7c1cb45df39c"
+SRC_URI[deb0.sha256sum] = "735d6bf7d15381ee114667531a9d9bf3ffe0771b22cf954317f4eff290b0b650"
 
 RDEPENDS = " \
     libc6 \

@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+# Copyright 2026 Elektrobit. All rights reserved.
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+# This package only ships pre-generated data files, so there is nothing to
+# configure or build; install the artifacts directly into the package tree.
+override_dh_auto_install:
+	install -d debian/yoriito-vss/etc/yoriito/viss
+	install -m 0644 artifact/yoriito_vss_v5.0.json \
+		debian/yoriito-vss/etc/yoriito/viss/vss.json
+	install -d debian/yoriito-vss/usr/share/yoriito
+	install -m 0644 artifact/yoriito_vss_v5.0.csv \
+		debian/yoriito-vss/usr/share/yoriito/

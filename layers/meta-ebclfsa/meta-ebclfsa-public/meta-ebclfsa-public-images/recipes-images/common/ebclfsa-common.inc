@@ -34,6 +34,7 @@ IMAGE_INSTALL:append = " \
     bsdutils \
     ca-certificates \
     coreutils \
+    cryptsetup-bin \
     diffutils \
     dmsetup \
     dpkg \
@@ -72,6 +73,14 @@ IMAGE_INSTALL:append = " \
     ebclfsa-base-sshd-root \
     ebclfsa-base-sudo-admin \
 "
+
+# Add user and group for elos
+GROUPS += "elos"
+GROUP_elos[flags] = "system"
+
+USERS += "elos"
+USER_elos[gid] = "elos"
+USER_elos[shell] = "/bin/false"
 
 # Override pre-defined config files (like fstab)
 ROOTFS_APT_ARGS:append = " -o Dpkg::Options::=--force-confnew"

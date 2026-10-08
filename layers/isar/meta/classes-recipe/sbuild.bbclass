@@ -1,4 +1,4 @@
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (C) 2021 ilbers GmbH
 
 SCHROOT_CONF ?= "/etc/schroot"
@@ -42,6 +42,10 @@ EOF
         # Prepare mount points
         cp -rf "${SCHROOT_CONF}/sbuild" "${SBUILD_CONF_DIR}"
         sbuild_fstab="${SBUILD_CONF_DIR}/fstab"
+
+        # Drop the shared /build bind mount so that /build lives in the session
+        # overlay and a fixed build path cannot be shared between sessions
+        sed -i '/^[^#].*[[:space:]]\/build[[:space:]]/d' ${sbuild_fstab}
 
         fstab_baseapt="${REPO_BASE_DIR} /base-apt none rw,bind,private 0 0"
         grep -qxF "${fstab_baseapt}" ${sbuild_fstab} || echo "${fstab_baseapt}" >> ${sbuild_fstab}

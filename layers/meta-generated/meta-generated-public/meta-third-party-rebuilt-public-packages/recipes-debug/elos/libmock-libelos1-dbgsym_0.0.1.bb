@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/libmock-libelos1-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "46faa79759d6da25f97d2afae874aab4"
-SRC_URI[deb0.sha1sum] = "ebbdb73dd804c393f06f7a9badb59a15c4013ec5"
-SRC_URI[deb0.sha256sum] = "b9e0a10bb7c85492e732481e83704ca0a222011a80d1e59064ac92d1421098ac"
+SRC_URI[deb0.md5sum] = "f9823033cdda8419e5987839b8d57233"
+SRC_URI[deb0.sha1sum] = "b61418bda719fa1f87bc8a908f4a28b3b15d2ca0"
+SRC_URI[deb0.sha256sum] = "e063b5cdf82c3fb3f1ab59579f4cbaa67e5db7f61267f0a28bfe8d8d90e6c99e"
 
 RDEPENDS = " \
     libmock-libelos1 \

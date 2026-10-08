@@ -4,10 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "appdev/apps/hello-safety"
+			"path": "examples/appdev/apps/hello-safety"
 		},
 		{
-			"path": "appdev/apps/hello-world"
+			"path": "examples/appdev/apps/hello-world"
 		}
 	],
 	"extensions": {

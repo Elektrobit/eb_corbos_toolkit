@@ -1,0 +1,21 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+# EB corbos Linux for Safety Applications - Public Base Layers & Configurations
+
+header:
+  version: 18
+  includes:
+    - "kas/includes/public/common-config.yml"
+
+repos:
+  meta-ebclfsa:
+    layers:
+      meta-ebclfsa-public:
+
+  meta-generated:
+    layers:
+      meta-generated-public:
+      meta-generated-public/meta-upstream-public-packages:
+      meta-generated-public/meta-ebclfsa-public-packages:
+      meta-generated-public/meta-third-party-public-packages:
+      meta-generated-public/meta-third-party-rebuilt-public-packages:

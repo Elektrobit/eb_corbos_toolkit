@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-client-dummy_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "e076bf7e6972390324b817c729325994"
-SRC_URI[deb0.sha1sum] = "df4630b1f515532e05ba90faac63fde5040b3c5a"
-SRC_URI[deb0.sha256sum] = "171bd60b300d3959d3ca0a1be912762cb1495bf7e85fc6e43f6165cfcacb0220"
+SRC_URI[deb0.md5sum] = "6d645659057c6d6e2e0f26d3737b42b2"
+SRC_URI[deb0.sha1sum] = "793ddb82bfb7b82c77ed76f5b6e2cab138aa1c4b"
+SRC_URI[deb0.sha256sum] = "3fb5b5325b3c7b53118e57b85ff75d0c00786a41b9f644cf7b28f156d72d21be"
 
 RDEPENDS = " \
     libc6 \

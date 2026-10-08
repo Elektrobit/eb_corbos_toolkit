@@ -14,9 +14,9 @@ SRC_URI = " \
     ${REPO_EBCLFSA_PUBLIC}/pool/main/e/ebcl-reposync/ebcl-reposync_0.2.0_all.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "e78fb35ad4db146746713259b55813d9"
-SRC_URI[deb0.sha1sum] = "414f413db692b2ebb456a56aa3836263f14601be"
-SRC_URI[deb0.sha256sum] = "4610564a30c2fe8f50bb9659c2b1dfc721c5472263fbb606884eb977fcb20624"
+SRC_URI[deb0.md5sum] = "5fdc8e23b041d7ecb2cd329daf82d90c"
+SRC_URI[deb0.sha1sum] = "58b57a9acbd74ad79f495a89ef61f4cb38209a65"
+SRC_URI[deb0.sha256sum] = "5097c3a7073acf52ccd524fa0635c25aeb5adc55059cbc8e7f10a84016905a62"
 
 RDEPENDS = " \
     python3 \
