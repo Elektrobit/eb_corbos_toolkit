@@ -104,7 +104,7 @@ jobs:
       - name: "Test: Run kas build using extracted run.sh"
         run: |
           cd "${WORKSPACE_ROOT}"
-          "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/public.yml
+          "${RUN_SCRIPT}" -d -- kas build --target fastdev kas/references/public.yml
 
       - name: "Test: Boot fastdev image in QEMU"
         run: |
