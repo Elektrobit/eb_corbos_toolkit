@@ -1,0 +1,18 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+# EB corbos Linux for Safety Applications - Core Base Layers & Configurations
+
+header:
+  version: 18
+  includes:
+    - "kas/includes/public/base.yml"
+
+repos:
+  meta-ebclfsa:
+    layers:
+      meta-ebclfsa-core:
+
+  meta-generated:
+    layers:
+      meta-generated-core:
+      meta-generated-core/meta-ebclfsa-core-packages:

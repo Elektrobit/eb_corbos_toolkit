@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-oomkiller-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "c09786c55ade913ac7bc98883397bb3e"
-SRC_URI[deb0.sha1sum] = "36d86f1f5467a3ffbc4a4830cbc6fa703b425ff5"
-SRC_URI[deb0.sha256sum] = "370dcaeb5a1324623ce10dad730d6beeb900d92700e56246cbc65ad5142502f9"
+SRC_URI[deb0.md5sum] = "71475400e609e1a1145e99fec27a7539"
+SRC_URI[deb0.sha1sum] = "5a92732e173452ca9a916eed40c5b2e12bb39ede"
+SRC_URI[deb0.sha256sum] = "fda040f959a8bc2879ce35e7a8e0faf45be0a9beb2d43d7548d7e524b299f5ff"
 
 RDEPENDS = " \
     elos-plugin-scanner-oomkiller \

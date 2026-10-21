@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/u/ubus/ubus_20250807_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "e00057133284d25d145342e7f15485a4"
-SRC_URI[deb0.sha1sum] = "4916bfb20d20941217fb851a39e0e3497ada61d2"
-SRC_URI[deb0.sha256sum] = "823f0ed163523bf50097dd42a99c401c9031c105d70729b43dc030fac44a74f8"
+SRC_URI[deb0.md5sum] = "dfe5681f3bc75ac95ecc54f535515e25"
+SRC_URI[deb0.sha1sum] = "a13acad9b75efd705db2d7344dc91517a7e88112"
+SRC_URI[deb0.sha256sum] = "ab9da62354084fb6181184c095e5d0100ccc0ff581c560e4f19df9338efbf0d3"
 
 RDEPENDS = " \
     libblobmsg-json1 \

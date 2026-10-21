@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+# Copyright 2026 Elektrobit. All rights reserved.
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --buildsystem=cmake --builddirectory=debian/build
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DBUILD_COMMON=ON \
+		-DBUILD_SIGNAL=OFF \
+		-DCMAKE_CXX_FLAGS="-I/usr/include/yoriito" \
+		-DCMAKE_EXE_LINKER_FLAGS="-L/usr/lib/yoriito" \
+		-DCMAKE_SHARED_LINKER_FLAGS="-L/usr/lib/yoriito"
+
+override_dh_auto_install:
+	dh_auto_install
+	# Avoid conflict with dlt-daemon's /etc/dlt.conf; the file is provided via
+	# update-alternatives (see debian/yoriito-common-library.alternatives).
+	if [ -f debian/yoriito-common-library/etc/dlt.conf ]; then \
+		mv debian/yoriito-common-library/etc/dlt.conf \
+			debian/yoriito-common-library/etc/dlt.conf.yoriito ; \
+	fi

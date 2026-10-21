@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-shmem-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "d73a7056c1292a94925b9bdd929ced08"
-SRC_URI[deb0.sha1sum] = "cd75df54490b0662209cb7e1ceb83184dba80108"
-SRC_URI[deb0.sha256sum] = "02225e0bab3be4913b87bf9f38a08ddb331d2a3d810ac1e1cb3563a039cd2fe3"
+SRC_URI[deb0.md5sum] = "153d05605519f17183f580248593a26e"
+SRC_URI[deb0.sha1sum] = "9f3acb1973f801cba2527d9b54d89181f83fb1f2"
+SRC_URI[deb0.sha256sum] = "d34d62600a693bd2b1ee7aed0535bbfabe70782deb53db3a65ce80e186c7194e"
 
 RDEPENDS = " \
     elos-plugin-scanner-shmem \

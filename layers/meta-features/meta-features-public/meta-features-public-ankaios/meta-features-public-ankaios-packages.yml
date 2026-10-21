@@ -1,0 +1,18 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+layer: "meta-features-public-ankaios-packages"
+layer_priority: 5
+repos:
+  - name: "Ankaios APT"
+    url: "https://repo.eclipse.org/repository/ankaios-apt"
+    distributions:
+      - "stable"
+    components:
+      - "main"
+    architectures:
+      - "amd64"
+      - "arm64"
+    packages:
+      - "ank"
+      - "ank-agent"
+      - "ank-server"

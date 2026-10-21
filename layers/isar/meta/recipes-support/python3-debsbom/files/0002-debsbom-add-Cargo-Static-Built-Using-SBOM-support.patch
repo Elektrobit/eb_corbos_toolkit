@@ -1,0 +1,377 @@
+From 73604e9c68e7eaf28ee2bc7483f127780ee1be64 Mon Sep 17 00:00:00 2001
+From: Matthias Beckert <matthias.beckert@elektrobit.com>
+Date: Tue, 6 Oct 2026 16:51:48 +0200
+Subject: [PATCH] debsbom: add Cargo Static-Built-Using SBOM support
+
+Parse exact crate versions from Static-Built-Using, represent them as Cargo
+PURLs, and emit static-link relationships in SPDX and CycloneDX. Ensure Cargo
+components are present when SBOMs are generated from dpkg status data.
+---
+ src/debsbom/dpkg/package.py  | 28 +++++++++++++++++-
+ src/debsbom/generate/cdx.py  | 12 ++++++--
+ src/debsbom/generate/spdx.py | 25 ++++++++++++++--
+ src/debsbom/sbom.py          | 13 +++++++--
+ tests/test_dpkg.py           | 25 +++++++++++++++-
+ tests/test_generation.py     | 56 +++++++++++++++++++++++++++++++++++-
+ 6 files changed, 149 insertions(+), 10 deletions(-)
+
+diff --git a/src/debsbom/dpkg/package.py b/src/debsbom/dpkg/package.py
+index 48d594c..66d084a 100644
+--- a/src/debsbom/dpkg/package.py
++++ b/src/debsbom/dpkg/package.py
+@@ -93,7 +93,7 @@ class PkgListStream:
+ 
+ def filter_sources(pkgs: Iterable["Package"]) -> Iterable["SourcePackage"]:
+     """Free function to only return source packages"""
+-    return filter(lambda p: p.is_source(), pkgs)
++    return filter(lambda p: p.is_source() and not isinstance(p, CargoPackage), pkgs)
+ 
+ 
+ def filter_binaries(pkgs: Iterable["Package"]) -> Iterable["BinaryPackage"]:
+@@ -395,6 +395,12 @@ class Package(ABC):
+             # a more complete source package we discovered via other mechanisms (e.g. apt cache).
+             logger.debug(f"Found built-using source package: '{bu.name}@{bu.version[1]}'")
+             yield SourcePackage(bu.name, bu.version[1])
++        for dep in pkg.static_built_using:
++            if not dep.version or dep.version[0] != "=":
++                logger.warning(f"Ignoring unversioned Static-Built-Using entry: {dep.name}")
++                continue
++            logger.debug(f"Found built-using Cargo crate: '{dep.name}@{dep.version[1]}'")
++            yield CargoPackage(dep.name, dep.version[1])
+         if add_pkg:
+             yield pkg
+ 
+@@ -566,6 +572,13 @@ class SourcePackage(Package):
+         )
+ 
+ 
++class CargoPackage(SourcePackage):
++    """Cargo crate represented by its lockfile-resolved name and version."""
++
++    def purl(self, vendor="debian") -> PackageURL:
++        return PackageURL(type="cargo", name=self.name, version=str(self.version))
++
++
+ @dataclass(init=False)
+ class BinaryPackage(Package):
+     """Incomplete representation of a Debian binary package."""
+@@ -577,6 +590,7 @@ class BinaryPackage(Package):
+     pre_depends: list[Dependency]
+     provides: list[VirtualPackage]
+     built_using: list[Dependency]
++    static_built_using: list[Dependency]
+     description: str | None
+     essential: bool
+     priority: DebianPriority | None
+@@ -596,6 +610,7 @@ class BinaryPackage(Package):
+         pre_depends: list[Dependency] = [],
+         provides: list[VirtualPackage] = [],
+         built_using: list[Dependency] = [],
++        static_built_using: list[Dependency] = [],
+         description: str | None = None,
+         essential: bool = False,
+         priority: DebianPriority | None = None,
+@@ -614,6 +629,7 @@ class BinaryPackage(Package):
+         self.pre_depends = pre_depends
+         self.provides = provides
+         self.built_using = built_using
++        self.static_built_using = static_built_using
+         self.description = description
+         self.essential = essential
+         self.priority = priority
+@@ -700,6 +716,10 @@ class BinaryPackage(Package):
+         built_using.extend(x for x in other.built_using if x not in built_using)
+         self.built_using = built_using
+ 
++        static_built_using = list(self.static_built_using)
++        static_built_using.extend(x for x in other.static_built_using if x not in static_built_using)
++        self.static_built_using = static_built_using
++
+     @property
+     def locator(self) -> str:
+         """Return the name (and path if available) of the .deb file"""
+@@ -773,6 +793,11 @@ class BinaryPackage(Package):
+         s_built_using = package.relations["built-using"] or []
+         sdepends = Dependency.from_pkg_relations(s_built_using, is_source=True)
+ 
++        static_built_using_line = package.get("Static-Built-Using")
++        static_built_using = (
++            Dependency.parse_depends_line(static_built_using_line) if static_built_using_line else []
++        )
++
+         status_raw = package.get("Status")
+         if status_raw:
+             _, _, pkg_status = status_raw.split(" ")
+@@ -800,6 +825,7 @@ class BinaryPackage(Package):
+             pre_depends=pre_dependencies,
+             provides=provides,
+             built_using=sdepends,
++            static_built_using=static_built_using,
+             description=cls._cleanup_description(package.get("Description")),
+             essential=package.get("Essential") == "yes",
+             priority=priority,
+diff --git a/src/debsbom/generate/cdx.py b/src/debsbom/generate/cdx.py
+index 8ab3da4..43ccbbd 100644
+--- a/src/debsbom/generate/cdx.py
++++ b/src/debsbom/generate/cdx.py
+@@ -25,6 +25,7 @@ from ..apt.copyright import UnknownLicenseError
+ from ..util.checksum_cdx import checksum_to_cdx
+ from ..dpkg.package import (
+     BinaryPackage,
++    CargoPackage,
+     DebianPriority,
+     Package,
+     DpkgStatus,
+@@ -65,7 +66,7 @@ def cdx_package_repr(
+     refs[ref] = cdx_bom_ref.BomRef(package.purl().to_string())
+ 
+     supplier = make_supplier_from_str(package.maintainer or "")
+-    if not supplier:
++    if not supplier and not isinstance(package, CargoPackage):
+         logger.warning(f"no supplier for {package}")
+ 
+     entry = cdx_component.Component(
+@@ -75,7 +76,7 @@ def cdx_package_repr(
+         supplier=supplier,
+         version=str(package.version),
+         purl=package.purl(vendor),
+-        group="debian",
++        group=None if isinstance(package, CargoPackage) else "debian",
+         hashes=[
+             cdx_hashtype(alg=checksum_to_cdx(alg), content=dig)
+             for alg, dig in package.checksums.items()
+@@ -294,7 +295,12 @@ def cyclonedx_bom(
+                     continue
+ 
+             deps.add(cdx_dependency.Dependency(ref=dep_bom_ref))
+-        if pkg_deps:
++
++        for dep in package.static_built_using:
++            ref_id = Reference.make_from_cargo_dep(dep).as_str(SBOMType.CycloneDX)
++            deps.add(cdx_dependency.Dependency(ref=refs[ref_id]))
++
++        if pkg_deps or package.static_built_using:
+             dependency = cdx_dependency.Dependency(
+                 ref=refs[reference.as_str(SBOMType.CycloneDX)],
+                 dependencies=deps,
+diff --git a/src/debsbom/generate/spdx.py b/src/debsbom/generate/spdx.py
+index fd535d4..94d6654 100644
+--- a/src/debsbom/generate/spdx.py
++++ b/src/debsbom/generate/spdx.py
+@@ -17,7 +17,14 @@ from urllib.parse import urlparse, urlunparse
+ from uuid import uuid4
+ 
+ from ..apt.copyright import UnknownLicenseError
+-from ..dpkg.package import BinaryPackage, DebianPriority, Package, VirtualPackage, filter_binaries
++from ..dpkg.package import (
++    BinaryPackage,
++    CargoPackage,
++    DebianPriority,
++    Package,
++    VirtualPackage,
++    filter_binaries,
++)
+ from ..util.checksum_spdx import checksum_to_spdx
+ from ..sbom import (
+     Reference,
+@@ -192,7 +199,11 @@ def spdx_package_repr(package: Package, vendor: str = "debian") -> spdx_package.
+             license_declared=licenses_decl,
+             download_location=SpdxNoAssertion(),
+             copyright_text=SpdxNoAssertion(),
+-            summary="Debian source code package '{}'".format(package.name),
++            summary=(
++                "Cargo crate '{}'".format(package.name)
++                if isinstance(package, CargoPackage)
++                else "Debian source code package '{}'".format(package.name)
++            ),
+             external_references=external_refs,
+             checksums=[
+                 Checksum(checksum_to_spdx(alg), dig) for alg, dig in package.checksums.items()
+@@ -306,6 +317,16 @@ def spdx_bom(
+                 logger.debug(f"Created built-using relationship: {relationship}")
+                 relationships.append(relationship)
+ 
++        for dep in package.static_built_using:
++            cargo_ref = Reference.make_from_cargo_dep(dep)
++            relationship = spdx_relationship.Relationship(
++                spdx_element_id=reference.as_str(SBOMType.SPDX),
++                relationship_type=spdx_relationship.RelationshipType.GENERATED_FROM,
++                related_spdx_element_id=cargo_ref.as_str(SBOMType.SPDX),
++                comment="static-built-using",
++            )
++            relationships.append(relationship)
++
+         if package.source:
+             sref = Reference.make_from_dep(package.source)
+             relationship = spdx_relationship.Relationship(
+diff --git a/src/debsbom/sbom.py b/src/debsbom/sbom.py
+index bda1f5b..b6694a2 100644
+--- a/src/debsbom/sbom.py
++++ b/src/debsbom/sbom.py
+@@ -7,7 +7,7 @@ from dataclasses import dataclass
+ from enum import Enum
+ import re
+ 
+-from .dpkg.package import BinaryPackage, Dependency, Package
++from .dpkg.package import BinaryPackage, CargoPackage, Dependency, Package
+ 
+ CDX_REF_PREFIX = "CDXRef-"
+ CDX_PACKAGE_EXTREF_TYPE_WEBSITE = "website"
+@@ -155,7 +155,9 @@ class Reference:
+         Return a reference to a package in the list of all packages.
+         This representation must match the one returned by ``make_from_dep``.
+         """
+-        if pkg.is_source():
++        if isinstance(pkg, CargoPackage):
++            return Reference(target=f"cargo-{pkg.name}-{pkg.version}", is_source=True)
++        elif pkg.is_source():
+             return Reference(target=f"{pkg.name}-{pkg.version}", is_source=True)
+         elif pkg.is_binary():
+             return Reference(target=f"{pkg.name}-{pkg.architecture}", is_source=False)
+@@ -174,6 +176,13 @@ class Reference:
+             to_arch = to_arch or dep.arch
+             return Reference(target=f"{dep.name}-{to_arch}", is_source=False)
+ 
++    @staticmethod
++    def make_from_cargo_dep(dep: Dependency) -> "Reference":
++        """Return a reference to an exactly versioned Cargo crate."""
++        if not dep.version or dep.version[0] != "=":
++            raise ValueError(f"Cargo dependency {dep.name} must have an exact version")
++        return Reference(target=f"cargo-{dep.name}-{dep.version[1]}", is_source=True)
++
+ 
+ class BomSpecific:
+     """Mixin to denote that a class processes bom type specific data"""
+diff --git a/tests/test_dpkg.py b/tests/test_dpkg.py
+index 5525062..5c2fca2 100644
+--- a/tests/test_dpkg.py
++++ b/tests/test_dpkg.py
+@@ -4,7 +4,7 @@
+ 
+ import io
+ from pathlib import Path
+-from debian.deb822 import PkgRelation
++from debian.deb822 import Packages, PkgRelation
+ from debian.debian_support import Version
+ import pytest
+ 
+@@ -12,6 +12,7 @@ from debsbom.dpkg.package import (
+     ChecksumAlgo,
+     Dependency,
+     BinaryPackage,
++    CargoPackage,
+     SourcePackage,
+     Package,
+     DpkgStatus,
+@@ -32,6 +33,28 @@ def test_parse_dependency():
+     ]
+ 
+ 
++def test_parse_static_built_using_cargo_crates():
++    record = next(
++        Packages.iter_paragraphs(
++            io.BytesIO(
++                b"Package: kura\nVersion: 0.1.0\nArchitecture: arm64\n"
++                b"Static-Built-Using: serde (= 1.0.228), tokio (= 1.50.0)\n\n"
++            ),
++            use_apt_pkg=False,
++        )
++    )
++    package = BinaryPackage.from_deb822(record)
++    assert package.static_built_using == [
++        Dependency("serde", version=("=", Version("1.0.228"))),
++        Dependency("tokio", version=("=", Version("1.50.0"))),
++    ]
++    cargo_packages = list(Package.referenced_src_packages([package]))
++    assert [p.purl().to_string() for p in cargo_packages if isinstance(p, CargoPackage)] == [
++        "pkg:cargo/serde@1.0.228",
++        "pkg:cargo/tokio@1.50.0",
++    ]
++
++
+ @pytest.mark.parametrize("mode", ["file", "stream"])
+ def test_parse_minimal_status_file(mode):
+     status_file = Path("tests/data/dpkg-status-minimal")
+diff --git a/tests/test_generation.py b/tests/test_generation.py
+index 7c3f03d..f9ad2ae 100644
+--- a/tests/test_generation.py
++++ b/tests/test_generation.py
+@@ -13,13 +13,16 @@ import subprocess
+ from urllib.parse import urlparse
+ from uuid import UUID, uuid4
+ from debian import deb822
++from debian.debian_support import Version
+ from io import TextIOWrapper
+ 
+ from debsbom.apt.cache import ExtendedStates, Repository
+ from debsbom.bomwriter.bomwriter import BomWriter
+-from debsbom.dpkg.package import ChecksumAlgo
++from debsbom.dpkg.package import BinaryPackage, CargoPackage, ChecksumAlgo, Dependency, Package
+ from debsbom.util.compression import Compression
+ from debsbom.generate import Debsbom, SBOMType
++from debsbom.generate.cdx import cyclonedx_bom
++from debsbom.generate.spdx import spdx_bom
+ from debsbom.sbom import BOM_Standard
+ 
+ 
+@@ -171,6 +174,57 @@ def test_dependency_generation(tmpdir, sbom_generator):
+         } in deps
+ 
+ 
++def test_static_built_using_cargo_generation(tmpdir):
++    pytest.importorskip("spdx_tools")
++    pytest.importorskip("cyclonedx")
++
++    kura = BinaryPackage(
++        name="kura",
++        version="0.1.0",
++        architecture="arm64",
++        static_built_using=[
++            Dependency("serde", version=("=", Version("1.0.228"))),
++            Dependency("tokio", version=("=", Version("1.50.0"))),
++        ],
++    )
++    cargo_packages = list(Package.referenced_src_packages([kura]))
++    assert all(isinstance(package, CargoPackage) for package in cargo_packages)
++    packages = {kura, *cargo_packages}
++
++    spdx_file = Path(tmpdir) / "cargo.spdx.json"
++    spdx_document = spdx_bom(packages, distro_name="pytest-distro", distro_arch="arm64")
++    BomWriter.create(SBOMType.SPDX).write_to_file(spdx_document, spdx_file, validate=True)
++    spdx_json = json.loads(spdx_file.read_text())
++    serde_package = next(package for package in spdx_json["packages"] if package["name"] == "serde")
++    assert any(
++        reference["referenceLocator"] == "pkg:cargo/serde@1.0.228"
++        for reference in serde_package["externalRefs"]
++    )
++    assert any(
++        relation["spdxElementId"] == "SPDXRef-kura-arm64"
++        and relation["relatedSpdxElement"] == "SPDXRef-cargo-serde-1.0.228-srcpkg"
++        and relation["relationshipType"] == "GENERATED_FROM"
++        for relation in spdx_json["relationships"]
++    )
++
++    cdx_file = Path(tmpdir) / "cargo.cdx.json"
++    cdx_bom = cyclonedx_bom(packages, distro_name="pytest-distro", distro_arch="arm64")
++    BomWriter.create(SBOMType.CycloneDX).write_to_file(cdx_bom, cdx_file, validate=True)
++    cdx_json = json.loads(cdx_file.read_text())
++    assert any(
++        component["purl"] == "pkg:cargo/serde@1.0.228"
++        and component.get("group") is None
++        for component in cdx_json["components"]
++    )
++    kura_dependency = next(
++        dependency
++        for dependency in cdx_json["dependencies"]
++        if dependency["ref"] == "pkg:deb/debian/kura@0.1.0?arch=arm64"
++    )
++    assert "pkg:cargo/serde@1.0.228" in kura_dependency["dependsOn"]
++    assert "pkg:cargo/tokio@1.50.0" in kura_dependency["dependsOn"]
++
++
+ def test_standard_bom(tmpdir):
+     _cyclonedx = pytest.importorskip("cyclonedx")
+ 
+-- 
+2.47.3
+
