@@ -1,3 +1,6 @@
+.gitconfig
 credentials.netrc
 kas.gitconfig
 timezone.env
+post_create_hook.sh
+post_start_hook.sh

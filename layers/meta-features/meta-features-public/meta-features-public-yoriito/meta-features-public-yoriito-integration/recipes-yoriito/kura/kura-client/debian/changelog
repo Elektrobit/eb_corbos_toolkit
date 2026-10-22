@@ -1,0 +1,5 @@
+kura-client (0.1.0) unstable; urgency=medium
+
+  * Initial ISAR packaging of the Yoriito VISS client library (Kura).
+
+ -- Elektrobit <info@elektrobit.com>  Tue, 11 Aug 2026 12:00:00 +0000

@@ -14,9 +14,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/s/safu/libmock-safu0_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "20c912866640baaf90e585d4dbc2d74f"
-SRC_URI[deb0.sha1sum] = "5b8684fd1d1e15e04dd050e5adce884f3b59336e"
-SRC_URI[deb0.sha256sum] = "bd6d427e342ee0f0bc71f6c41d31b4dca1b892f8f5b2c4c9072ece69c3fa56af"
+SRC_URI[deb0.md5sum] = "70569007eb81d7dfbd848e8e4e8b4fee"
+SRC_URI[deb0.sha1sum] = "4c7c04f14c813e3e9b29c80a5d40300c75583db2"
+SRC_URI[deb0.sha256sum] = "109e501374fb68933306eed5d731eda716c67cd1a1ceb86468f9fbaa6d6739a2"
 
 RDEPENDS = " \
     libc6 \

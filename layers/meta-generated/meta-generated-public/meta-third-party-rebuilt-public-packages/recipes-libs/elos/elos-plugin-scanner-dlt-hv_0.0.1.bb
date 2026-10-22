@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-dlt-hv_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "c094172d9e7e964e6c14c18c0f1e8703"
-SRC_URI[deb0.sha1sum] = "05e106f2f6b0024b81944efd03b93d908d06dd89"
-SRC_URI[deb0.sha256sum] = "3c883c7349b4199a2d17cf2dbb92816dae1f975e0c925a3339998861c7fa44d1"
+SRC_URI[deb0.md5sum] = "491e55bccd4b7d6ba5e9447e0cd4844a"
+SRC_URI[deb0.sha1sum] = "10d6fbd1ac3b6e165eda76effe77cfd5bdf89189"
+SRC_URI[deb0.sha256sum] = "d00a82054c593a1af09610bfd80100fe7431db4a5bce95d22d3cb99d0a4a285f"
 
 RDEPENDS = " \
     libc6 \

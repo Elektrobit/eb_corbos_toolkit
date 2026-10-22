@@ -1,4 +1,4 @@
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (C) 2018 Siemens AG
 #
 # this class is heavily inspired by OEs ./meta/classes/image_types_wic.bbclass
@@ -107,7 +107,7 @@ WICVARS += "\
            ROOTFS_SIZE STAGING_DATADIR STAGING_DIR STAGING_LIBDIR TARGET_SYS TRANSLATED_TARGET_ARCH"
 
 # Isar specific vars used in our plugins
-WICVARS += "DISTRO DISTRO_ARCH KERNEL_FILE"
+WICVARS += "DISTRO DISTRO_ARCH KERNEL_FILE MACHINE"
 
 python do_rootfs_wicenv () {
     wicvars = d.getVar('WICVARS')
@@ -212,11 +212,16 @@ EOIMAGER
 merge_wic_sbom() {
     BOMTYPE="$1"
     TIMESTAMP=$(date --iso-8601=s -d @${SOURCE_DATE_EPOCH})
+    # As there is no common ancestor of the initramfs and image recipe, the name of the
+    # initrd that is generated is only coincidally coupled with the one that is imaged.
+    # By that, we need to derive the INITRAMFS_FULLNAME variable (set in initramfs.bbclass)
+    # from the INITRD_DEPLOY_FILE variable which points to the initrd that is imaged.
+    INITRAMFS_FULLNAME="${@ d.getVar('INITRD_DEPLOY_FILE').removesuffix('-initrd.img') }"
     sbom_document_uuid="${@d.getVar('SBOM_DOCUMENT_UUID') or generate_document_uuid(d, False)}"
 
-    cat ${DEPLOY_DIR_IMAGE}/${IMAGE_FULLNAME}.${bomtype}.json \
-        ${DEPLOY_DIR_IMAGE}/${INITRD_DEPLOY_FILE}.${bomtype}.json \
-        ${WORKDIR}/imager.${bomtype}.json 2>/dev/null | \
+    cat ${DEPLOY_DIR_IMAGE}/${ROOTFS_PACKAGE_SUFFIX}.$BOMTYPE.json \
+        ${@ '${DEPLOY_DIR_IMAGE}/$INITRAMFS_FULLNAME.$BOMTYPE.json' if d.getVar('IMAGE_INITRD') else '' } \
+        ${WORKDIR}/imager.$BOMTYPE.json 2>/dev/null | \
     bwrap \
         --unshare-user \
         --unshare-pid \
@@ -227,5 +232,5 @@ merge_wic_sbom() {
             --cdx-serialnumber $sbom_document_uuid \
             --spdx-namespace '${SBOM_SPDX_NAMESPACE_PREFIX}'-$sbom_document_uuid \
             --timestamp $TIMESTAMP - -o - \
-     > ${DEPLOY_DIR_IMAGE}/${IMAGE_FULLNAME}.wic.$bomtype.json
+     > ${DEPLOY_DIR_IMAGE}/${IMAGE_FULLNAME}.wic.$BOMTYPE.json
 }

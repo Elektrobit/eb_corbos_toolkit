@@ -1,4 +1,4 @@
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (C) 2025 Siemens
 #
 # SPDX-License-Identifier: MIT
@@ -10,9 +10,9 @@ SBOM_DEBSBOM_TYPE_ARGS = "${@"-t " + " -t ".join(d.getVar("SBOM_TYPES").split())
 
 # general user variables
 SBOM_DISTRO_SUPPLIER ?= "isar-users <isar-users@googlegroups.com>"
-SBOM_DISTRO_NAME ?= "ISAR-Debian-GNU-Linux"
+SBOM_DISTRO_NAME ?= "Isar-Debian-GNU-Linux"
 SBOM_DISTRO_VERSION ?= "1"
-SBOM_DISTRO_SUMMARY ?= "Linux distribution built with ISAR"
+SBOM_DISTRO_SUMMARY ?= "Linux distribution built with Isar"
 SBOM_BASE_DISTRO_VENDOR ??= "debian"
 SBOM_DOCUMENT_UUID ?= ""
 SBOM_DEBSBOM_EXTRA_ARGS ?= "--with-licenses"
@@ -50,7 +50,7 @@ generate_sbom() {
         --bind ${SBOM_CHROOT} / \
         --bind ${ROOTFSDIR} /mnt/rootfs \
         --bind ${DEPLOY_DIR_SBOM} /mnt/deploy-dir \
-        -- debsbom -v generate ${SBOM_DEBSBOM_TYPE_ARGS} -r /mnt/rootfs -o /mnt/deploy-dir/'${PN}-${DISTRO}-${MACHINE}' \
+        -- debsbom -v generate ${SBOM_DEBSBOM_TYPE_ARGS} -r /mnt/rootfs -o /mnt/deploy-dir/'${ROOTFS_PACKAGE_SUFFIX}' \
             --distro-name '${SBOM_DISTRO_NAME}' --distro-supplier '${SBOM_DISTRO_SUPPLIER}' \
             --distro-version '${SBOM_DISTRO_VERSION}' --distro-arch '${DISTRO_ARCH}' \
             --base-distro-vendor '${SBOM_BASE_DISTRO_VENDOR}' \

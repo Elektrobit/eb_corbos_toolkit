@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/libelos-cpp1_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "dc0d90b641841f8e9851ae24d299744e"
-SRC_URI[deb0.sha1sum] = "e731b05a5d126dee847ae622dba3d36d5ae9211c"
-SRC_URI[deb0.sha256sum] = "54547e2a16e3e32ba8483c599f94fb910e929b97acb16a1418a684d84c38555a"
+SRC_URI[deb0.md5sum] = "be1ef06630e8926b209365ab0999a74e"
+SRC_URI[deb0.sha1sum] = "911cb4968dfb408a2daf62349d295039d1fbe480"
+SRC_URI[deb0.sha256sum] = "881afe38547c554fa0f25c33e8bb47a90d98a6607436f0a4e3046bb3625e2901"
 
 RDEPENDS = " \
     libc6 \

@@ -1,0 +1,47 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+
+repos:
+  meta-features-public-yoriito-integration:
+    path: "layers/meta-features/meta-features-public/meta-features-public-yoriito/meta-features-public-yoriito-integration"
+    layers:
+      .:
+  meta-features-public-yoriito-packages:
+    path: "layers/meta-features/meta-features-public/meta-features-public-yoriito/meta-features-public-yoriito-packages"
+    layers:
+      .:
+
+local_conf_header:
+  yoriito_feature: |
+    YORIITO_FEATURE_CONTENT = " \
+      yoriito-vss \
+      yoriito-common-library \
+      yoriito-signal-api \
+      kura \
+      kura-client \
+    "
+
+    YORIITO_FEATURE_SDK_CONTENT = " \
+      libgrpc++-dev \
+      libprotobuf-dev \
+    "
+
+    YORIITO_FEATURE_INTEGRATION_SIZE_MB = "128"
+
+    # Additional feature content
+    EBCLFSA_FASTDEV_FEATURES_CONTENT += "${YORIITO_FEATURE_CONTENT}"
+    EBCLFSA_LIVM_FEATURES_CONTENT += "${YORIITO_FEATURE_CONTENT}"
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_CONTENT
+    EBCLFSA_FASTDEV_FEATURE_SDK_CONTENT += "${YORIITO_FEATURE_SDK_CONTENT}"
+    EBCLFSA_LIVM_FEATURE_SDK_CONTENT += "${YORIITO_FEATURE_SDK_CONTENT}"
+    # Currently nothing for EBCLFSA_HIVM_FEATURE_SDK_CONTENT
+
+    # Partition growth settings for different rootfs types in Megabytes
+    EBCLFSA_FASTDEV_FEATURES_ROOTFS_PARTITION_GROWTH_MB += " ${YORIITO_FEATURE_INTEGRATION_SIZE_MB}"
+    EBCLFSA_LIVM_FEATURES_ROOTFS_PARTITION_GROWTH_MB += " ${YORIITO_FEATURE_INTEGRATION_SIZE_MB}"
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_ROOTFS_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_FASTDEV_FEATURES_DATA_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_LIVM_FEATURES_DATA_PARTITION_GROWTH_MB
+    # Currently nothing for EBCLFSA_HIVM_FEATURES_DATA_PARTITION_GROWTH_MB

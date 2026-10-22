@@ -14,9 +14,9 @@ SRC_URI = " \
     ${REPO_EBCLFSA_PUBLIC_BINARY}/pool/main/e/ebcl-userland-utils/ebclfsa-li-demo_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "d75aae8523b9295552546e5ff4e6f91c"
-SRC_URI[deb0.sha1sum] = "f0857418d494952513007c1470395ef0e6115c97"
-SRC_URI[deb0.sha256sum] = "931d9c6906483c9df57fea85eecd4da4de88e37a4338a8ddb3590a03f3252a9d"
+SRC_URI[deb0.md5sum] = "529558692537cd78156fa5316c63524d"
+SRC_URI[deb0.sha1sum] = "1a9f5034290052ac91a3394f659e31bd3566d3fd"
+SRC_URI[deb0.sha256sum] = "3ca01bc71b31a87e381897ed90538896075205f19b71040055664a44be8f0953"
 
 RDEPENDS = " \
     libc6 \

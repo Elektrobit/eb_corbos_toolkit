@@ -1,0 +1,20 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    - "kas/includes/public/base.yml"
+
+machine: "container-amd64"
+
+# Must be top-level. Cannot use quotes for the value here
+build_system: isar
+
+target:
+  - "buildcontainer"
+  - "devcontainer"
+
+local_conf_header:
+  source_date_epoch: |
+    # Fixed SOURCE_DATE_EPOCH for reproducible builds (2026-08-01T00:00:00Z)
+    SOURCE_DATE_EPOCH = "1785542400"
