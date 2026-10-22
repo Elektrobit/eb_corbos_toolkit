@@ -1,3 +1,0 @@
-target extended-remote @TARGET_HOST@:@GDB_PORT@
-set remote exec-file /@CMAKE_INSTALL_BINDIR@/hi_app
-set sysroot @CMAKE_SYSROOT@

@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/libelosdlt1-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "df7eb213f56eef764ddcb00ed300dfb2"
-SRC_URI[deb0.sha1sum] = "776225aef4428d07646d083d1deeb1faa9012e91"
-SRC_URI[deb0.sha256sum] = "9eaa0a8676f04db69f933d8ecdec21fba7a710f8e54d2502334fbb5fdcdceb47"
+SRC_URI[deb0.md5sum] = "232ed7b6592eebbc6475ff3c2588e236"
+SRC_URI[deb0.sha1sum] = "4df9d5bca63893892f4825d3a6e2ca78b080b903"
+SRC_URI[deb0.sha256sum] = "7cfa9c03a2ef7904425ec69e4fab3493d6bfcaf65788d576060539c38a4980f8"
 
 RDEPENDS = " \
     libelosdlt1 \

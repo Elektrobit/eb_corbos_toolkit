@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/libu/libubox/libblobmsg-json1_20250807_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "250e312f377b94babae968c57a0ea847"
-SRC_URI[deb0.sha1sum] = "f2acbed05ce923b7f08899be0d4a5c9ecace88d6"
-SRC_URI[deb0.sha256sum] = "4da359122be2fe2a6fff92a060767aaf1c989e04f6598cde3202b4dc18577481"
+SRC_URI[deb0.md5sum] = "ff68c8dd2e3ed35ca80323081a2bad4a"
+SRC_URI[deb0.sha1sum] = "a68d81123a88b841683094c39075936753560e6a"
+SRC_URI[deb0.sha256sum] = "c37970bc4a851342946d8345b0b2e553860d772bf486d41c898f5d46c1ca464b"
 
 RDEPENDS = " \
     libc6 \

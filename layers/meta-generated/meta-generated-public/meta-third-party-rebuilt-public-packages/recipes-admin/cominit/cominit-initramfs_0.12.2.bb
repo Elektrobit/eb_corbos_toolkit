@@ -26,9 +26,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/c/cominit/cominit-initramfs_0.12.2_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "2b9299356e531b3018b2501a2839d5ab"
-SRC_URI[deb0.sha1sum] = "66388cb8a357bd32d4d05a8c692cf2548955a623"
-SRC_URI[deb0.sha256sum] = "b1cfdeb95b51289aa1b91125f1b2206e893430e78fc4da9cea04f99e8a54869b"
+SRC_URI[deb0.md5sum] = "a2c4ba421dfae9ca0398c69227ae574e"
+SRC_URI[deb0.sha1sum] = "7494e90188d41c58de3f537962cfe6f26e734282"
+SRC_URI[deb0.sha256sum] = "deca481cf917f1118c0c7516a1e5fbb66a6bf99409696d6576ac5a79f4cb32ce"
 
 RDEPENDS = " \
     cominit \

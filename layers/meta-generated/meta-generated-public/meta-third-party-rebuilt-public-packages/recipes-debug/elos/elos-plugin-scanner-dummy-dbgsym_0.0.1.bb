@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-dummy-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "b636950c5d5a5500a0166b1ef6a74e52"
-SRC_URI[deb0.sha1sum] = "3e6c8a252551c9d92337a6c1053d90bc19691e52"
-SRC_URI[deb0.sha256sum] = "b295397aa010befa04d5220cf0f01b89bde4438cfc18e14cbc18885033d21b3e"
+SRC_URI[deb0.md5sum] = "d36c2a65b3178b9a66bbad36437e9009"
+SRC_URI[deb0.sha1sum] = "316097723b8886d6f064ebc77d1e8b0bac4da222"
+SRC_URI[deb0.sha256sum] = "a8032f5e70fe3a548b07fcfd2ee8826fa05c29c82ff88f9c610d3ca8db41b46b"
 
 RDEPENDS = " \
     elos-plugin-scanner-dummy \

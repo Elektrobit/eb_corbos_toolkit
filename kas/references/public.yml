@@ -1,0 +1,18 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+header:
+  version: 18
+  includes:
+    # EB corbos Linux for Safety Applications - Public Base Layers & Configurations
+    - "kas/includes/public/base.yml"
+
+build_system: isar
+
+repos:
+  meta-ebclfsa:
+    layers:
+      meta-ebclfsa-public/meta-ebclfsa-public-bsp:
+      meta-ebclfsa-public/meta-ebclfsa-public-images:
+
+target:
+  - "fastdev"

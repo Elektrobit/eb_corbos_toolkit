@@ -1,0 +1,28 @@
+Source: yoriito-common-library
+Section: libs
+Priority: optional
+Maintainer: Elektrobit <info@elektrobit.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ libdlt-dev,
+ libprotobuf-dev,
+ protobuf-compiler,
+ protobuf-compiler-grpc,
+ libgrpc++-dev,
+Rules-Requires-Root: no
+Standards-Version: 4.6.0.1
+Homepage: https://github.com/yoriito/vehicle-api
+
+Package: yoriito-common-library
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ ldconfig-yoriito,
+ libgrpc++1.51,
+Description: Common library for the Yoriito Vehicle API
+ Provides the common library shared by the Yoriito Signal and Access APIs.
+ It exposes its shared library and headers under /usr/lib/yoriito and
+ /usr/include/yoriito. The package ships a DLT configuration that is registered
+ via update-alternatives to avoid conflicting with the dlt-daemon package.

@@ -1,8 +1,0 @@
-# Copyright 2026 Elektrobit. All rights reserved.
-
-header:
-  version: 18
-  includes:
-    - "kas/includes/bsp/rpi4b.yml"
-
-machine: "rpi4b"

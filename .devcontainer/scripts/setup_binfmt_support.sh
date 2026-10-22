@@ -13,7 +13,7 @@ BINFMT_CFG="$(dc_devcontainer_root)/binfmt-config/${BINFMT_ID}"
 BINFMT_PROC="/proc/sys/fs/binfmt_misc"
 
 function check_if_binfmt_available {
-   if [ "$(ls ${BINFMT_PROC}/ | grep ${BINFMT_ID})" ]; then
+   if [[ -e ${BINFMT_PROC}/${BINFMT_ID} ]]; then
       echo "true"
    else
       echo "false"
@@ -21,7 +21,7 @@ function check_if_binfmt_available {
 }
 
 if [ "$(uname -p)" != "aarch64" ]; then
-   if [ ! "$(mount -l | grep binfmt)" ]; then
+   if ! mount -l 2>/dev/null | grep -q 'binfmt'; then
       dc_info "Mounting binfmt_misc to ${BINFMT_PROC}"
       $(dc_sudo) mount binfmt_misc -t binfmt_misc "${BINFMT_PROC}"
    fi

@@ -1,0 +1,31 @@
+Source: kura-client
+Section: libs
+Priority: optional
+Maintainer: Elektrobit <info@elektrobit.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ cargo:native,
+ rustc:native,
+ pkg-config,
+ libprotobuf-dev,
+ protobuf-compiler,
+ protobuf-compiler-grpc,
+ libgrpc++-dev,
+ yoriito-common-library,
+Rules-Requires-Root: no
+Standards-Version: 4.6.0.1
+Homepage: https://github.com/yoriito/kura
+
+Package: kura-client
+Architecture: any
+Provides: yoriito-viss-client
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ ldconfig-yoriito,
+ libgrpc++1.51,
+ yoriito-common-library,
+Description: Yoriito VISS client library (Kura)
+ Provides the C/C++ producer/consumer client library and headers for the
+ Yoriito VISS Server, installed under /usr/lib/yoriito and /usr/include/yoriito.

@@ -39,7 +39,7 @@ $COMMON_ARGS
 USAGE
 }
 
-check_commandline_arguments() 
+check_commandline_arguments()
 {
     [ -z "${SDK_ARCHIVE}" ] \
         && { echo "SDK archive mandatory, please specify via -s or --sdk-archive" ; exit 1; } \

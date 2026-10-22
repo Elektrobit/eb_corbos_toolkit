@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-scanner-kmsg-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "735c2c576b4da945e57247b9788dfdf9"
-SRC_URI[deb0.sha1sum] = "b19d83ac7bdc552a93d427d5646f3508ed1cf0be"
-SRC_URI[deb0.sha256sum] = "42247573e99279eb736bc64ba7c719f728d3575633bc3bb309b5a1bd5efbbdbf"
+SRC_URI[deb0.md5sum] = "a00c818c64849c9d3e3fc6228867a727"
+SRC_URI[deb0.sha1sum] = "5e4d65f6a5db25a61799ab90ac1df08b73916652"
+SRC_URI[deb0.sha256sum] = "7e41d6e2723327ab9bef317e67df9ed2a97df56c25b30b1df0affa8bb3104f4f"
 
 RDEPENDS = " \
     elos-plugin-scanner-kmsg \

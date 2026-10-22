@@ -1,0 +1,60 @@
+{
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23
+    },
+    "include": [
+        "/usr/share/cmake/ebclfsa/presets/ebclfsaBasePreset.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "fastdev-li-app-qemuarm64",
+            "inherits": "base",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/compositions/toolchain-gcc-li-arm64.cmake",
+            "environment": {
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-ebcl-qemuarm64"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT}"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-qemuarm64"
+                }
+            }
+        },
+        {
+            "name": "fastdev-li-app-rpi4b",
+            "inherits": "base",
+            "toolchainFile": "$env{TOOLCHAIN_BASE}/compositions/toolchain-gcc-li-arm64.cmake",
+            "environment": {
+                "SYSROOT": "$env{SYSROOT_BASE}/fastdev-sdk-trixie-ebclfsa-rpi4b"
+            },
+            "cacheVariables": {
+                "CMAKE_SYSROOT": {
+                    "type": "STRING",
+                    "value": "$env{SYSROOT}"
+                },
+                "TARGET_HOST": {
+                    "type": "STRING",
+                    "value": "fastdev-rpi4b"
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "fastdev-li-app-qemuarm64",
+            "configurePreset": "fastdev-li-app-qemuarm64",
+            "inherits": "base"
+        },
+        {
+            "name": "fastdev-li-app-rpi4b",
+            "configurePreset": "fastdev-li-app-rpi4b",
+            "inherits": "base"
+        }
+    ]
+}
