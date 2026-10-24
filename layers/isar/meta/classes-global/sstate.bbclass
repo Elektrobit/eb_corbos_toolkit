@@ -1214,6 +1214,7 @@ addhandler sstate_eventhandler_reachablestamps
 sstate_eventhandler_reachablestamps[eventmask] = "bb.event.ReachableStamps"
 python sstate_eventhandler_reachablestamps() {
     import glob
+    import subprocess
     d = e.data
     stamps = e.stamps.values()
     removeworkdir = (d.getVar("SSTATE_PRUNE_OBSOLETEWORKDIR", False) == "1")
@@ -1274,7 +1275,14 @@ python sstate_eventhandler_reachablestamps() {
                     sstate_clean_manifest(m, d)
                 bb.utils.remove(stamp + "*")
                 if removeworkdir:
-                    bb.utils.remove(workdir, recurse = True)
+                    try:
+                        bb.utils.remove(workdir, recurse = True)
+                    except subprocess.CalledProcessError:
+                        # Workdirs may contain root-owned or read-only content
+                        # (e.g. chroot rootfs), which needs sudo to be removed
+                        bb.note("Using sudo to remove root owned folders in %s" % workdir)
+                        subprocess.check_call(['sudo', 'rm', '-rf', '--one-file-system'] +
+                                              glob.glob(workdir))
                 lines.remove(r)
                 removed = removed + 1
                 bb.event.fire(bb.event.ProcessProgress(msg, removed), d)

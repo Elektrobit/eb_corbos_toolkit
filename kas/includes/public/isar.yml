@@ -40,6 +40,9 @@ repos:
       fix-container-reproducibility:
         repo: isar
         path: "../../internal/isar-patches/fix-container-reproducibility"
+      fix-sstate-workdir-removal:
+        repo: isar
+        path: "../../internal/isar-patches/fix-sstate-workdir-removal"
       gitignore:
         repo: isar
         path: "../../internal/isar-patches/gitignore"
