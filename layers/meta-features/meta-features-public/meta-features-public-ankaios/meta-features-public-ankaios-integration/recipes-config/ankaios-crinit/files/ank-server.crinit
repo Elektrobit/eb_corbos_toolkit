@@ -1,0 +1,12 @@
+# Copyright 2026 Elektrobit. All rights reserved.
+
+NAME = ank-server
+ 
+# ank-server listens on 127.0.0.1, which netifd assigns to lo asynchronously.
+COMMAND = /bin/sh -c "while ! ip -4 address show dev lo up | grep -q 'inet 127.0.0.1/'; do sleep 1; done; exec /usr/bin/ank-server"
+
+DEPENDS = @provided:network
+PROVIDES = ank-server:spawn
+
+RESPAWN = YES
+RESPAWN_RETRIES = 3

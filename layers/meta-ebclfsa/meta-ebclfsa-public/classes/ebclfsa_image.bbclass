@@ -3,8 +3,11 @@
 inherit ebclfsa_base
 inherit multiarch_helper
 
+def ebclfsa_partition_size(baseline, growth):
+    return str(int(baseline) + sum(int(value) for value in growth.split()))
+
 IMAGE_PREINSTALL = ""
-SDK_INSTALL += "cmake patchelf"
+SDK_INSTALL += "cmake patchelf ebclfsa-cmake"
 SDK_FORMATS = "tar.gz"
 
 # Set $ORIGIN-relative rpaths for toolchain ELF binaries so the SDK
@@ -47,6 +50,29 @@ ORIGIN_RPATHS_EOF
     sudo install -m 0755 ${WORKDIR}/sdk_set_origin_rpaths.sh ${ROOTFSDIR}/tmp/sdk_set_origin_rpaths.sh
     sudo chroot ${ROOTFSDIR} /tmp/sdk_set_origin_rpaths.sh
     sudo rm -f ${ROOTFSDIR}/tmp/sdk_set_origin_rpaths.sh
+}
+
+# Hide libc.so.6 from the default library search path. SDK host tool
+# binaries run natively on the SDK host, so their ELF interpreter always
+# resolves to the host loader; if libc.so.6 was found via the SDK's own
+# rpath instead, a mismatch between interpreter and libc.so.6 can crash
+# with "stack smashing detected" when the SDK's glibc is newer than the
+# host's. Moving libc.so.6 out of the rpath directory makes the
+# (unmodified) interpreter fall back to resolving it via the host's own
+# ld.so cache. relocate-sdk.sh symlinks it back into place once the SDK's
+# own loader is set as interpreter.
+#
+# This must run after every other postprocessing step that chroots into
+# the SDK rootfs (e.g. sdk_set_origin_rpaths above): once chrooted, there
+# is no other libc.so.6 to fall back to.
+ROOTFS_POSTPROCESS_COMMAND:append:class-sdk = " sdk_hide_host_libc"
+sdk_hide_host_libc() {
+    arch=$(uname -m)
+    libc_dir=${ROOTFSDIR}/usr/lib/${arch}-linux-gnu
+    if [ -f ${libc_dir}/libc.so.6 ] && [ ! -L ${libc_dir}/libc.so.6 ]; then
+        sudo mkdir -p ${libc_dir}/sdk-libc
+        sudo mv ${libc_dir}/libc.so.6 ${libc_dir}/sdk-libc/libc.so.6
+    fi
 }
 
 IMAGER_BUILD_DEPS:append = " ${@isar_multiarch_recipes('IMAGER_INSTALL', 'HOST_ARCH', d)}"

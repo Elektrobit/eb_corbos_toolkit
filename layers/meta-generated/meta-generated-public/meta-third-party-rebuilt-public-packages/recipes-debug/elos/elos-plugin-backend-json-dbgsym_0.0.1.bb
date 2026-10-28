@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-backend-json-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "d5c5524612ef7153ab457e52bba3b0f5"
-SRC_URI[deb0.sha1sum] = "8273333249b12f788f8d9cbdf34f610999d19a75"
-SRC_URI[deb0.sha256sum] = "7f4acf85c8860ffca56d3dd3da39905660f741d1b8a28bd1f94c0e135fe09ee2"
+SRC_URI[deb0.md5sum] = "ecb86907832c98070b4680530c7f2efa"
+SRC_URI[deb0.sha1sum] = "4e2ebff8b3d6880ee6d0271ecfba2797246a221e"
+SRC_URI[deb0.sha256sum] = "ca1304e853331f162b6565298a64d0201a5e5e784594af2b8ee0bc7f1a302610"
 
 RDEPENDS = " \
     elos-plugin-backend-json \

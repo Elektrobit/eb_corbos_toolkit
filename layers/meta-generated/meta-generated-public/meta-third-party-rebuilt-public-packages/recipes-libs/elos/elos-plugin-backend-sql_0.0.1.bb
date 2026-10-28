@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/e/elos/elos-plugin-backend-sql_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "629d5e3080218bf80473fbd4ada1caad"
-SRC_URI[deb0.sha1sum] = "c0996f781f6d70ff35e002e6155343dc796905f7"
-SRC_URI[deb0.sha256sum] = "b667c56ead5fdbdba2a9caf77c2924c626ad0278bfef7ef29e2fc5793518e1b1"
+SRC_URI[deb0.md5sum] = "63ac869b0cebe2b2e5fd41aa146c39b7"
+SRC_URI[deb0.sha1sum] = "373c8cdbfd3f37dcb8497362e65a083817b99d9d"
+SRC_URI[deb0.sha256sum] = "6c0b25dfe3c964135a0e66daf79af92b1e6072d2e414b0cb638ad1ea5c56d5e3"
 
 RDEPENDS = " \
     libc6 \

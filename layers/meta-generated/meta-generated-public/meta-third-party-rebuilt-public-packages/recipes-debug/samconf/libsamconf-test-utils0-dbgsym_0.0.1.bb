@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/s/samconf/libsamconf-test-utils0-dbgsym_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "0d9e262a35f944ebe6212dc4dcf7e1d7"
-SRC_URI[deb0.sha1sum] = "7edb35ad0b3884c808a7e8b61a6428bace0e0b15"
-SRC_URI[deb0.sha256sum] = "e9a27876b0e0abe413763eade31f8304ebb21a84fd40367e052907390f7a2d21"
+SRC_URI[deb0.md5sum] = "c878473f569f2898ef08d4a4488e6721"
+SRC_URI[deb0.sha1sum] = "89fdbb22ded0cce14655427dcd59b309961c77fc"
+SRC_URI[deb0.sha256sum] = "b80181b93beb663410c1fd220e63076aed2c3682b3b10d0b0429f7af77a645ce"
 
 RDEPENDS = " \
     libsamconf-test-utils0 \

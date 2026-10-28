@@ -16,9 +16,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/s/samconf/libmock-samconf0_0.0.1_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "f233a6d0a2e0a6e2f57ac404f90d54b9"
-SRC_URI[deb0.sha1sum] = "fab6a8513d5fdf45e0c22e92e4f344185b7c1f1a"
-SRC_URI[deb0.sha256sum] = "be0995ec620b789faeb64b2b75fe4270985c5f93aa4ca6dfdb032f2e4bdc4917"
+SRC_URI[deb0.md5sum] = "cbde1f9a7f58ad1654e37d49e5b5d531"
+SRC_URI[deb0.sha1sum] = "83014c6824a60f5f6d102273ad2a75528a7b5c0d"
+SRC_URI[deb0.sha256sum] = "1236d0c6c6a5ecc5ff607b9de5afe8a74c72936872901b5f3605f31b0790a681"
 
 RDEPENDS = " \
     libsamconf0 \

@@ -30,9 +30,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - kas-config: kas/public.yml:kas/includes/qt.yml
+          - kas-config: kas/references/public.yml
             test_boot: true
-          - kas-config: kas/public.yml:kas/includes/qt.yml:kas/targets/rpi4b.yml
+          - kas-config: kas/references/public.yml:kas/features/public/ankaios.yml:kas/features/public/qt.yml:kas/features/public/yoriito.yml
+            test_boot: true
+          - kas-config: kas/references/public.yml:kas/features/public/ankaios.yml:kas/features/public/qt.yml:kas/features/public/yoriito.yml:/workspace/kas/machines/public/rpi4b.yml
             test_boot: false
     timeout-minutes: 120
     env:

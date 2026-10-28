@@ -49,6 +49,7 @@ wait_for_ssh() {
     local host="$1"
     local max_tries="$2"
     local probe_delay="$3"
+    local qemu_log="${QEMU_LOG:-/workspace/qemu.log}"
     for i in $(seq 1 "$max_tries"); do
         if ssh "${host}" echo ok 2>&1; then
             echo "SSH connection to ${host} succeeded"
@@ -57,7 +58,11 @@ wait_for_ssh() {
         echo "Waiting for ssh connection to ${host}... ($i/$max_tries)"
         sleep ${probe_delay}
     done
-    cat "${log}"
     echo "Error: Waiting for ssh connection to ${host} timed out!"
+    if [[ -f "${qemu_log}" ]]; then
+        cat "${qemu_log}"
+    else
+        echo "QEMU log not found at ${qemu_log}"
+    fi
     exit 1
 }

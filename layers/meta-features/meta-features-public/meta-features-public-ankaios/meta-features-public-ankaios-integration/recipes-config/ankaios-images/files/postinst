@@ -1,0 +1,8 @@
+#!/bin/sh
+# Copyright 2026 Elektrobit. All rights reserved.
+
+# Extract as root on the target to preserve ownership and permissions
+
+mkdir -p /var/lib/containers/storage
+tar -C /var/lib/containers/storage -xpf /var/lib/containers/container-images.tar
+rm -f /var/lib/containers/container-images.tar

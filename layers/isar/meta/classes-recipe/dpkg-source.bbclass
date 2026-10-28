@@ -1,4 +1,4 @@
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (C) 2023 ilbers GmbH
 #
 # SPDX-License-Identifier: MIT
@@ -15,6 +15,11 @@ DPKG_SOURCE_EXTRA_ARGS ?= "-I"
 DEBIAN_SOURCE ?= "${BPN}"
 
 do_dpkg_source() {
+    # Clamp mtimes, otherwise dpkg-source records the wall clock time of
+    # do_unpack and the source package differs on every rebuild
+    find ${WORKDIR}/${PPS} -newermt "@${SOURCE_DATE_EPOCH}" \
+        -exec touch -h -d@${SOURCE_DATE_EPOCH} '{}' +
+
     # Create a .dsc file from source directory to use it with sbuild
     DEB_SOURCE_NAME=$(dpkg-parsechangelog --show-field Source --file ${WORKDIR}/${PPS}/debian/changelog)
     if [ "${DEB_SOURCE_NAME}" != "${DEBIAN_SOURCE}" ]; then

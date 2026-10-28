@@ -1,4 +1,4 @@
-# This software is a part of ISAR.
+# This software is a part of Isar.
 # Copyright (C) Siemens AG, 2021-2025
 #
 # SPDX-License-Identifier: MIT
@@ -33,6 +33,7 @@ do_containerize() {
     local tag="${CONTAINER_IMAGE_TAG}"
     local path="${CONTAINER_IMAGE_PATH}"
     local oci_img_dir="${WORKDIR}/oci-image"
+    local sde_iso="$(date --iso-8601=s -u -d @${SOURCE_DATE_EPOCH})"
     local rootfs="${IMAGE_ROOTFS}"
 
     # prepare OCI container image skeleton
@@ -42,15 +43,15 @@ do_containerize() {
     sudo umoci new --image "${oci_img_dir}:${empty_tag}"
     if [ -n "${cmd}" ]; then
         sudo umoci config --image "${oci_img_dir}:${empty_tag}" \
-            --config.cmd="${cmd}"
+            --no-history --config.cmd="${cmd}"
     fi
     if [ -n "${entrypoint}" ]; then
         sudo umoci config --image "${oci_img_dir}:${empty_tag}" \
-            --config.entrypoint="${entrypoint}"
+            --no-history --config.entrypoint="${entrypoint}"
     fi
     if [ -n "${path}" ]; then
         sudo umoci config --image "${oci_img_dir}:${empty_tag}" \
-            --config.env="PATH=${path}"
+            --no-history --config.env="PATH=${path}"
     fi
     sudo umoci unpack --image "${oci_img_dir}:${empty_tag}" \
         "${oci_img_dir}_unpacked"
@@ -60,10 +61,18 @@ do_containerize() {
     # clean-up temporary files
     sudo find "${oci_img_dir}_unpacked/rootfs/tmp" -mindepth 1 -delete
 
+    # clamp root directory mtime for reproducible container images
+    sudo touch -h -d@${SOURCE_DATE_EPOCH} "${oci_img_dir}_unpacked/rootfs"
+
     # pack container image
     bbdebug 1 "pack container image"
     sudo umoci repack --image "${oci_img_dir}:${tag}" \
+        --history.created="${sde_iso}" \
         "${oci_img_dir}_unpacked"
+
+    # set image created timestamp for reproducibility
+    sudo umoci config --image "${oci_img_dir}:${tag}" \
+        --no-history --created="${sde_iso}"
     sudo umoci remove --image "${oci_img_dir}:${empty_tag}"
     sudo rm -rf "${oci_img_dir}_unpacked"
 

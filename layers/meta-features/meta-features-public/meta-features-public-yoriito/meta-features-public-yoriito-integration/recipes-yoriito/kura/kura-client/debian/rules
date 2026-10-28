@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+# Copyright 2026 Elektrobit. All rights reserved.
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+# Keep cargo's registry/cache inside the build tree.
+export CARGO_HOME = $(CURDIR)/debian/cargo_home
+
+# yoriito-common-library installs its shared objects into the multiarch
+# subdirectory /usr/lib/<triplet>/yoriito, so the client build must add that
+# path (not /usr/lib/yoriito) to the linker search path.
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+%:
+	dh $@ --buildsystem=cmake --builddirectory=debian/build --sourcedirectory=client/cc
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_CXX_FLAGS="-I/usr/include/yoriito" \
+		-DCMAKE_EXE_LINKER_FLAGS="-L/usr/lib/$(DEB_HOST_MULTIARCH)/yoriito" \
+		-DCMAKE_SHARED_LINKER_FLAGS="-L/usr/lib/$(DEB_HOST_MULTIARCH)/yoriito"

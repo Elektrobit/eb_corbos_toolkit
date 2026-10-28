@@ -1,0 +1,19 @@
+#!/bin/sh
+# Take over /etc/dlt.conf from the (pre-built) dlt-daemon package so that this
+# package can provide it via update-alternatives. The original dlt-daemon file
+# is renamed to /etc/dlt.conf.dlt-daemon and registered as a lower-priority
+# alternative (see debian/yoriito-common-library.alternatives). This mirrors the
+# behaviour previously implemented in dlt-daemon_%.bbappend, which could no
+# longer be applied once dlt-daemon became a pre-built package.
+set -e
+
+case "$1" in
+    install|upgrade)
+        dpkg-divert --package yoriito-common-library --add --rename \
+            --divert /etc/dlt.conf.dlt-daemon /etc/dlt.conf
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0
