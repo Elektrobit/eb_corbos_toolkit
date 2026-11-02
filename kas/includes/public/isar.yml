@@ -6,7 +6,7 @@ header:
 repos:
   isar:
     path: "layers/isar"
-    url: "git@github.com:ilbers/isar.git"
+    url: "https://github.com/ilbers/isar.git"
     commit: "cc5a5d98a89ca19049575b94b71a0beeafa61c71"
     branch:
     layers:
