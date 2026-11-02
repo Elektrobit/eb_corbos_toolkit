@@ -1,0 +1,77 @@
+From 6f364b779b87386a8bd92aafa6c1a09aac415b04 Mon Sep 17 00:00:00 2001
+From: Andreas Naumann <anaumann@emlix.com>
+Date: Tue, 5 Aug 2025 05:50:16 +0200
+Subject: [PATCH 2/4] mmdebstrap: Include isar-apt in bootstrapping sources
+
+To support using custom variants of packages in bootstrap, include isar-apt
+as possible distro source.
+In order to avoid wasting time on copying, reuse the bind-mount technique
+from the base-apt implementation.
+
+Signed-off-by: Andreas Naumann <anaumann@emlix.com>
+Upstream-Status: Submitted [https://groups.google.com/g/isar-users/c/9XRdDQ1taZ0/m/BygkiaHcAwAJ]
+
+[Sergei Koziakov <Sergei.Koziakov@elektrobit.com>: updated patch to work on commit 34c3cda5]
+---
+ .../isar-mmdebstrap/isar-mmdebstrap.inc       | 24 ++++++++++++++-----
+ 1 file changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc b/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
+index d0b3ff0c..767a86f1 100644
+--- a/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
++++ b/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
+@@ -172,8 +172,11 @@ do_bootstrap() {
+     else
+         deb_dl_dir_import "${WORKDIR}/dl_dir" "${BOOTSTRAP_BASE_DISTRO}-${BASE_DISTRO_CODENAME}"
+ 
++        isar_apt_tmp="$(mktemp -d /tmp/isar-aptXXXXXXXXXX)"
+         bootstrap_list="${WORKDIR}/sources.list.d/bootstrap.list"
+-        install -v -m644 "${APTSRCS}" "$bootstrap_list"
++        line="copy://$isar_apt_tmp/${DISTRO} ${DEBDISTRONAME} main"
++        echo "deb [trusted=yes] ${line}" >  "$bootstrap_list"
++        cat "${APTSRCS}" >> "$bootstrap_list"
+ 
+         syncin='flock -s ${DEB_DL_LOCK} cp -n --no-preserve=owner \
+                       "${WORKDIR}/dl_dir/var/cache/apt/archives/"*.deb \
+@@ -181,17 +184,23 @@ do_bootstrap() {
+         syncout='flock -s ${DEB_DL_LOCK} cp -n --no-preserve=owner \
+                        "$1/var/cache/apt/archives/"*.deb \
+                        "${WORKDIR}/dl_dir/var/cache/apt/archives/"'
+-        extra_setup="$syncin"
++        extra_setup="mount --bind '${REPO_ISAR_DIR}' $isar_apt_tmp"
++        extra_setup="$extra_setup && $syncin"
+         extra_extract="$syncout"
++        extra_essential="mkdir -p \$1/$isar_apt_tmp && \
++                         echo \$1 > ${WORKDIR}/mmtmpdir && \
++                         mount -o bind,private '${REPO_ISAR_DIR}' \$1/$isar_apt_tmp"
+         # prefetch apt debs because mmdebstrap will clean them on next stage
+-        extra_essential='apt-get install apt -y -d \
++        extra_apt='apt-get install apt -y -d \
+                                  -o Dir::State="$1/var/lib/apt" \
+                                  -o Dir::Etc="$1/etc/apt" \
+                                  -o Dir::Cache="$1/var/cache/apt" \
+                                  -o Apt::Architecture="${BOOTSTRAP_DISTRO_ARCH}" \
+                                  ${@get_apt_opts(d, '-o')}'
+-        extra_essential="$extra_essential && $syncout"
+-        extra_customize="$syncout"
++        extra_essential="$extra_essential && $extra_apt && $syncout"
++        extra_customize="umount \$1/$isar_apt_tmp && \
++                         umount $isar_apt_tmp && rm -rf --one-file-system $isar_apt_tmp"
++        extra_customize="$extra_customize && $syncout"
+     fi
+ 
+     if [ ! -z "${SOURCE_DATE_EPOCH}" ]; then
+@@ -214,7 +223,10 @@ do_bootstrap() {
+           [ -d "$tmpdir" ] && sudo rm -rf --one-file-system $tmpdir; \
+           [ -n "$base_apt_tmp" ] && mountpoint -q $base_apt_tmp \
+                                  && sudo umount $base_apt_tmp \
+-                                 && rm -rf --one-file-system $base_apt_tmp' EXIT
++                                 && rm -rf --one-file-system $base_apt_tmp; \
++          [ -n "$isar_apt_tmp" ] && mountpoint -q $isar_apt_tmp \
++                                 && sudo umount $isar_apt_tmp \
++                                 && rm -rf --one-file-system $isar_apt_tmp' EXIT
+ 
+     # Create lock file so that it is owned by the user running the build (not root)
+     mkdir -p ${DEBDIR}
+-- 
+2.47.3

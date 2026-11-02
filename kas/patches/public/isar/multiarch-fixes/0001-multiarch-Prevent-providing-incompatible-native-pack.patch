@@ -1,0 +1,72 @@
+From 753c0a3cd932beb4467f51307720e8482103cd6f Mon Sep 17 00:00:00 2001
+From: Andreas Naumann <anaumann@emlix.com>
+Date: Wed, 10 Sep 2025 13:24:33 +0200
+Subject: [PATCH] multiarch: Prevent providing incompatible native packages
+
+When extending/providing native packages, we must not do so with packages
+that are incompatible with the HOST_ARCH because otherwise, depending on the PV,
+they may override a sibling package which does support the HOST_ARCH but with
+a lower PV.
+
+To do this introduce a check for the packages DPKG_ARCH compatibility.
+- For cross-target configurations, just prevent providing the extended package.
+- For native-target configurations, skip the recipe altogether as the base variant
+will not be compatible as well.
+
+The check is not needed in case DPKG_ARCH is not set, which may be the case for
+  - a recipe that produces multiple debian packages with varying Architecture
+    settings.
+  - a recipe is not suited to native/compat handling but inherits multiarch
+    indirectly anyway (image class).
+
+Signed-off-by: Andreas Naumann <anaumann@emlix.com>
+Upstream-Status: Deferred [waiting for feedback on patch 0001 and 0006]
+
+[Sergei Koziakov <Sergei.Koziakov@elektrobit.com>: updated patch to work on commit 34c3cda5]
+---
+ meta/classes-recipe/multiarch.bbclass | 20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/meta/classes-recipe/multiarch.bbclass b/meta/classes-recipe/multiarch.bbclass
+index cdd35f12..41918b19 100644
+--- a/meta/classes-recipe/multiarch.bbclass
++++ b/meta/classes-recipe/multiarch.bbclass
+@@ -8,6 +8,9 @@ python() {
+     pn = d.getVar('PN')
+     archDiffers = d.getVar('HOST_ARCH') != d.getVar('DISTRO_ARCH')
+     archIsAll = d.getVar('DPKG_ARCH') == 'all'
++    archIsAny = d.getVar('DPKG_ARCH') == 'any'
++    archIsNative = d.getVar('DPKG_ARCH') == d.getVar('HOST_ARCH')
++    archIsKnown = d.getVar("DPKG_ARCH", True)
+ 
+     def pn_multiarch_target(pn):
+         return pn.endswith('-native') or pn.endswith('-compat')
+@@ -28,13 +31,22 @@ python() {
+         else:
+             d.appendVar('BBCLASSEXTEND', ' compat')
+ 
++    # Gather conditions where native extension is possible
++    nativeIsValid = archIsNative or archIsAll or archIsAny
++
+     # build native separately only when it differs from the target variant
+     # We must not short-circuit for DPKG_ARCH=all packages, as they might
+     # have transitive dependencies which need to be built for -native.
+-    if archDiffers:
+-        d.appendVar('BBCLASSEXTEND', ' native')
+-    else:
+-        extend_provides(pn, 'native', d)
++    if archIsKnown and archDiffers:
++        if nativeIsValid:
++            d.appendVar('BBCLASSEXTEND', ' native')
++        else:
++            bb.debug(2, "Package %s is not compatible with the host architecture. Skipped extending as -native" % pn)
++    elif archIsKnown:
++        if nativeIsValid:
++            extend_provides(pn, 'native', d)
++        else:
++            raise bb.parse.SkipRecipe("Incompatible with the target architecture %s" % d.getVar('DISTRO_ARCH'))
+ 
+     # drop own -native build dependencies at recipe level if building natively
+     # and not for the builder architecture
+-- 
+2.47.3

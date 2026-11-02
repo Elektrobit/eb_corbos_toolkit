@@ -1,0 +1,141 @@
+From f05ae95ca680e4ecb17af7b92ee89c11e81281f7 Mon Sep 17 00:00:00 2001
+From: Sergei Koziakov <Sergei.Koziakov@elektrobit.com>
+Date: Thu, 26 Mar 2026 12:16:59 +0000
+Subject: [PATCH 1/2] SBOM: use ebclfsa_dpkg_python in the isar packages
+
+To enable the build of the python packages required for SBOM generation
+with debsbom when using the local apt repository, update the recipes
+files for aforementioned python packages to inherit from
+ebclfsa_dpkg_python.
+
+This patch should not be submitted to upstream.
+---
+ meta/recipes-devtools/sbom-chroot/sbom-chroot.bb              | 1 +
+ .../python3-beartype/python3-beartype_0.19.0.bb               | 2 +-
+ .../python3-cyclonedx-lib/python3-cyclonedx-lib_9.1.0.bb      | 3 ++-
+ meta/recipes-support/python3-debsbom/python3-debsbom_0.7.1.bb | 3 ++-
+ .../python3-packageurl/python3-packageurl_0.16.0.bb           | 2 +-
+ .../python3-py-serializable/python3-py-serializable_2.0.0.bb  | 3 +--
+ .../python3-spdx-tools/python3-spdx-tools_0.8.3.bb            | 4 +++-
+ 7 files changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/meta/recipes-devtools/sbom-chroot/sbom-chroot.bb b/meta/recipes-devtools/sbom-chroot/sbom-chroot.bb
+index 182432a0..d20715af 100644
+--- a/meta/recipes-devtools/sbom-chroot/sbom-chroot.bb
++++ b/meta/recipes-devtools/sbom-chroot/sbom-chroot.bb
+@@ -18,6 +18,7 @@ ROOTFS_INSTALL_COMMAND:remove = "rootfs_restore_initrd_tooling"
+ 
+ # additional packages for the SBOM chroot
+ DEPENDS:append:bookworm = " python3-cyclonedx-lib"
++DEPENDS:append:trixie = " python3-cyclonedx-lib"
+ DEPENDS:append:noble = " python3-cyclonedx-lib"
+ DEPENDS += "python3-debsbom python3-spdx-tools"
+ 
+diff --git a/meta/recipes-support/python3-beartype/python3-beartype_0.19.0.bb b/meta/recipes-support/python3-beartype/python3-beartype_0.19.0.bb
+index b5c16493..fbfc03d5 100644
+--- a/meta/recipes-support/python3-beartype/python3-beartype_0.19.0.bb
++++ b/meta/recipes-support/python3-beartype/python3-beartype_0.19.0.bb
+@@ -3,7 +3,7 @@
+ #
+ # SPDX-License-Identifier: MIT
+ 
+-inherit dpkg
++inherit ebclfsa_dpkg_python
+ 
+ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+ 
+diff --git a/meta/recipes-support/python3-cyclonedx-lib/python3-cyclonedx-lib_9.1.0.bb b/meta/recipes-support/python3-cyclonedx-lib/python3-cyclonedx-lib_9.1.0.bb
+index d65261e2..714e343d 100644
+--- a/meta/recipes-support/python3-cyclonedx-lib/python3-cyclonedx-lib_9.1.0.bb
++++ b/meta/recipes-support/python3-cyclonedx-lib/python3-cyclonedx-lib_9.1.0.bb
+@@ -3,11 +3,12 @@
+ #
+ # SPDX-License-Identifier: MIT
+ 
+-inherit dpkg
++inherit ebclfsa_dpkg_python
+ 
+ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+ 
+ DEPENDS:append:bookworm = " python3-packageurl python3-py-serializable"
++DEPENDS:append:trixie = " python3-packageurl python3-py-serializable"
+ DEPENDS:append:noble = " python3-packageurl python3-py-serializable"
+ 
+ S = "${WORKDIR}/cyclonedx_python_lib-${PV}"
+diff --git a/meta/recipes-support/python3-debsbom/python3-debsbom_0.7.1.bb b/meta/recipes-support/python3-debsbom/python3-debsbom_0.7.1.bb
+index 97fa429f..ed50b2ef 100644
+--- a/meta/recipes-support/python3-debsbom/python3-debsbom_0.7.1.bb
++++ b/meta/recipes-support/python3-debsbom/python3-debsbom_0.7.1.bb
+@@ -3,13 +3,14 @@
+ #
+ # SPDX-License-Identifier: MIT
+ 
+-inherit dpkg
++inherit ebclfsa_dpkg_python
+ 
+ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+ 
+ S = "${WORKDIR}/git"
+ 
+ DEPENDS:append:bookworm = " python3-packageurl"
++DEPENDS:append:trixie = " python3-packageurl"
+ DEPENDS:append:noble = " python3-packageurl"
+ 
+ S = "${WORKDIR}/git"
+diff --git a/meta/recipes-support/python3-packageurl/python3-packageurl_0.16.0.bb b/meta/recipes-support/python3-packageurl/python3-packageurl_0.16.0.bb
+index 8cd96acb..662a58ae 100644
+--- a/meta/recipes-support/python3-packageurl/python3-packageurl_0.16.0.bb
++++ b/meta/recipes-support/python3-packageurl/python3-packageurl_0.16.0.bb
+@@ -3,7 +3,7 @@
+ #
+ # SPDX-License-Identifier: MIT
+ 
+-inherit dpkg
++inherit ebclfsa_dpkg_python
+ 
+ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+ 
+diff --git a/meta/recipes-support/python3-py-serializable/python3-py-serializable_2.0.0.bb b/meta/recipes-support/python3-py-serializable/python3-py-serializable_2.0.0.bb
+index 42a67e09..fe140674 100644
+--- a/meta/recipes-support/python3-py-serializable/python3-py-serializable_2.0.0.bb
++++ b/meta/recipes-support/python3-py-serializable/python3-py-serializable_2.0.0.bb
+@@ -3,7 +3,7 @@
+ #
+ # SPDX-License-Identifier: MIT
+ 
+-inherit dpkg
++inherit ebclfsa_dpkg_python
+ 
+ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+ 
+@@ -12,7 +12,6 @@ S = "${WORKDIR}/py_serializable-${PV}"
+ MAINTAINER = "Christoph Steiger <christoph.steiger@siemens.com>"
+ DPKG_ARCH = "all"
+ DEBIAN_BUILD_DEPENDS = " \
+-    dh-sequence-python3, \
+     pybuild-plugin-pyproject, \
+     python3-all, \
+     python3-defusedxml, \
+diff --git a/meta/recipes-support/python3-spdx-tools/python3-spdx-tools_0.8.3.bb b/meta/recipes-support/python3-spdx-tools/python3-spdx-tools_0.8.3.bb
+index 4aad2e71..b877c81c 100644
+--- a/meta/recipes-support/python3-spdx-tools/python3-spdx-tools_0.8.3.bb
++++ b/meta/recipes-support/python3-spdx-tools/python3-spdx-tools_0.8.3.bb
+@@ -3,13 +3,15 @@
+ #
+ # SPDX-License-Identifier: MIT
+ 
+-inherit dpkg
++inherit ebclfsa_dpkg_python
+ 
+ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+ 
+ S = "${WORKDIR}/tools-python-${PV}"
+ 
+ DEPENDS:append:bookworm = " python3-beartype"
++DEPENDS:append:trixie = " python3-beartype"
++DEPENDS:append:noble = " python3-beartype"
+ 
+ MAINTAINER = "Christoph Steiger <christoph.steiger@siemens.com>"
+ DPKG_ARCH = "all"
+-- 
+2.47.3

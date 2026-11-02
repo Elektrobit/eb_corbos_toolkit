@@ -1,0 +1,34 @@
+From 692ab964b7bdefffbd8daae63a115e38c11e3340 Mon Sep 17 00:00:00 2001
+From: Andreas Naumann <anaumann@emlix.com>
+Date: Wed, 6 Aug 2025 09:29:08 +0200
+Subject: [PATCH 3/4] mmdebstrap: Allow for DISTRO_SOURCE to be empty
+
+For isar-apt to be actually used, mmdebstrap needs to be supplied
+with the correct suite name, "isar" as default.
+
+Introduce a flag which allows switching to use the suite of the
+internal isar-apt instead of DISTRO_SOURCE
+
+Signed-off-by: Andreas Naumann <anaumann@emlix.com>
+Upstream-Status: Submitted [https://groups.google.com/g/isar-users/c/DkAIQwiEX9M/m/n34yuaHcAwAJ]
+
+[Sergei Koziakov <Sergei.Koziakov@elektrobit.com>: updated patch to work on commit 34c3cda5]
+---
+ meta/classes-recipe/bootstrap.bbclass | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/meta/classes-recipe/bootstrap.bbclass b/meta/classes-recipe/bootstrap.bbclass
+index 03014cb8..91342615 100644
+--- a/meta/classes-recipe/bootstrap.bbclass
++++ b/meta/classes-recipe/bootstrap.bbclass
+@@ -186,6 +186,8 @@ def generate_distro_sources(d):
+                     yield parsed
+ 
+ def get_distro_primary_source_entry(d):
++    if bb.utils.to_boolean(d.getVar('ISAR_USE_ISAR_APT_TO_BOOTSTRAP')):
++        return ["", "${DEBDISTRONAME}", "main"]
+     for source in generate_distro_sources(d):
+         if source[0] == "deb":
+             return source[2:]
+-- 
+2.47.3

@@ -1,0 +1,57 @@
+From 876baff0af03f995eeb0321f94b23472f24816b4 Mon Sep 17 00:00:00 2001
+From: Matthias Beckert <matthias.beckert@elektrobit.com>
+Date: Wed, 8 Apr 2026 14:02:57 +0000
+Subject: [PATCH] pybootchartgui: fix division by zero in render_charts
+
+When buildstats contain only tasks that completed instantly (e.g. all
+resolved from sstate cache), proc_tree.duration computes to zero,
+causing a ZeroDivisionError in draw.py during PDF rendering.
+
+This occurs intermittently in builds with high sstate cache hit rates,
+where entire buildstats subdirectories have identical start and end
+timestamps.
+
+Fix by clamping duration to a minimum of 1 in ProcessTree.__init__,
+preventing division by zero across all rendering code paths.
+---
+ scripts/pybootchartgui/pybootchartgui/parsing.py      | 2 +-
+ scripts/pybootchartgui/pybootchartgui/process_tree.py | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/scripts/pybootchartgui/pybootchartgui/parsing.py b/scripts/pybootchartgui/pybootchartgui/parsing.py
+index b42dac6b..d55376d0 100644
+--- a/scripts/pybootchartgui/pybootchartgui/parsing.py
++++ b/scripts/pybootchartgui/pybootchartgui/parsing.py
+@@ -68,7 +68,7 @@ class Trace:
+             def __init__(self, start_time, end_time):
+                 self.start_time = start_time
+                 self.end_time = end_time
+-                self.duration = self.end_time - self.start_time
++                self.duration = max(self.end_time - self.start_time, 1)
+         self.proc_tree = BitbakeProcessTree(min(self.start.keys()),
+                                             max(self.end.keys()))
+ 
+diff --git a/scripts/pybootchartgui/pybootchartgui/process_tree.py b/scripts/pybootchartgui/pybootchartgui/process_tree.py
+index cf88110b..506e2043 100644
+--- a/scripts/pybootchartgui/pybootchartgui/process_tree.py
++++ b/scripts/pybootchartgui/pybootchartgui/process_tree.py
+@@ -58,7 +58,7 @@ class ProcessTree:
+ 
+         self.start_time = self.get_start_time(self.process_tree)
+         self.end_time = self.get_end_time(self.process_tree)
+-        self.duration = self.end_time - self.start_time
++        self.duration = max(self.end_time - self.start_time, 1)
+         self.idle = idle
+ 
+         if for_testing:
+@@ -78,7 +78,7 @@ class ProcessTree:
+ 
+         self.start_time = self.get_start_time(self.process_tree)
+         self.end_time = self.get_end_time(self.process_tree)
+-        self.duration = self.end_time - self.start_time
++        self.duration = max(self.end_time - self.start_time, 1)
+ 
+         self.num_proc = self.num_nodes(self.process_tree)
+ 
+-- 
+2.47.3
