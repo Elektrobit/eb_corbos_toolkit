@@ -1,0 +1,4 @@
+0001-Use-relative-paths-in-library-linker-files.patch
+0002-fix-relocation-for-gcc-and-clang.patch
+0003-Only-use-sysroot-wrapper-if-not-disabled.patch
+0004-relocate-sdk-use-patchelf-from-SDK-sysroot-and-resto.patch

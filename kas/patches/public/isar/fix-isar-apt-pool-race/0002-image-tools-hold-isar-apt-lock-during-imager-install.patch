@@ -1,0 +1,50 @@
+From cc2cd14c8a1de8603bec5127050ea98dad289afa Mon Sep 17 00:00:00 2001
+From: EB corbos Linux Team <noreply@elektrobit.com>
+Date: Fri, 7 Aug 2026 00:00:00 +0000
+Subject: [PATCH 2/2] image-tools: hold isar-apt lock during imager install
+
+Commit "rootfs: hold isar-apt lock through install to prevent pool race"
+fixed this for do_rootfs_install, but imager_run has the very same
+pattern and was missed.
+
+In imager_run only "apt-get update" and the "--download-only install"
+run under the shared isar-apt lock. The subsequent real "apt-get
+install" runs unlocked, while the isar-apt bind mount is still live.
+Since isar-apt is a file:/ source, apt does not copy the archive into
+/var/cache/apt/archives; it hands the /isar-apt/pool/... path straight
+to dpkg. A concurrent do_deploy_deb (holding the exclusive lock) runs
+reprepro removefilter + includedeb, so the pool file briefly does not
+exist and the install fails with:
+
+  E: Could not open file /isar-apt/pool/main/libz/libzstd/zstd_1.5.7+dfsg-1_amd64.deb - open (2: No such file or directory)
+  dpkg: error: cannot access archive '/isar-apt/pool/main/libz/libzstd/zstd_1.5.7+dfsg-1_amd64.deb': No such file or directory
+
+This is sporadic: it only triggers when an unrelated do_deploy_deb
+happens to rewrite a pool file the imager is installing, inside the
+sub-second removefilter/includedeb window.
+
+Wrap the real install in the shared lock as well, so concurrent
+do_deploy_deb tasks cannot mutate the pool while dpkg reads from it.
+---
+ meta/classes-recipe/image-tools-extension.bbclass | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/meta/classes-recipe/image-tools-extension.bbclass b/meta/classes-recipe/image-tools-extension.bbclass
+index ab616b7e..74a4d258 100644
+--- a/meta/classes-recipe/image-tools-extension.bbclass
++++ b/meta/classes-recipe/image-tools-extension.bbclass
+@@ -61,10 +61,12 @@ imager_run() {
+ EOAPT
+ 
+         deb_dl_dir_export ${schroot_dir} ${distro}
++        ${SCRIPTSDIR}/lockrun.py -r -f "${REPO_ISAR_DIR}/isar.lock" -s <<EOAPT
+         schroot -r -c ${session_id} -d / -u root -- sh -c " \
+             apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y \
+                 --allow-unauthenticated --allow-downgrades install \
+                 ${local_install}"
++EOAPT
+     fi
+ 
+     schroot -r -c ${session_id} "$@"
+-- 
+2.47.3
