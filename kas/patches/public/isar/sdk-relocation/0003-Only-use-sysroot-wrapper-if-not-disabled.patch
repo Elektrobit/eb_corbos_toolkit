@@ -1,0 +1,36 @@
+From 0933c3a3fe25fd27437b4c2d9c0ae1101773e8a0 Mon Sep 17 00:00:00 2001
+From: Matthias Beckert <matthias.beckert@elektrobit.com>
+Date: Fri, 6 Mar 2026 12:34:37 +0000
+Subject: [PATCH 3/3] Only use sysroot-wrapper if not disabled
+
+[Sergei Koziakov <Sergei.Koziakov@elektrobit.com>: updated patch to work on commit 34c3cda5]
+---
+ meta/classes-recipe/sdk.bbclass | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/meta/classes-recipe/sdk.bbclass b/meta/classes-recipe/sdk.bbclass
+index 27641b43..2950c6ad 100644
+--- a/meta/classes-recipe/sdk.bbclass
++++ b/meta/classes-recipe/sdk.bbclass
+@@ -101,12 +101,14 @@ sdkchroot_finalize() {
+     done
+ 
+     # Set up sysroot wrapper
+-    for tool_pattern in "gcc-[0-9]*" "g++-[0-9]*" "cpp-[0-9]*" "ld.bfd" "ld.gold"; do
+-        for tool in $(find ${ROOTFSDIR}/usr/bin -type f -name "*-linux-gnu*-${tool_pattern}"); do
+-            sudo mv "${tool}" "${tool}.bin"
+-            sudo ln -sf gcc-sysroot-wrapper.sh ${tool}
++    if [ "${DISABLE_TOOLCHAIN_WRAPPER}" != "1" ]; then
++        for tool_pattern in "gcc-[0-9]*" "g++-[0-9]*" "cpp-[0-9]*" "ld.bfd" "ld.gold"; do
++            for tool in $(find ${ROOTFSDIR}/usr/bin -type f -name "*-linux-gnu*-${tool_pattern}"); do
++                sudo mv "${tool}" "${tool}.bin"
++                sudo ln -sf gcc-sysroot-wrapper.sh ${tool}
++            done
+         done
+-    done
++    fi
+ 
+     # Use relative paths in linker files
+     for lib in $(find ${ROOTFSDIR} -type f \( -name '*.so' -o -name '*.a' \)); do
+-- 
+2.47.3

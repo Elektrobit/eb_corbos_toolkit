@@ -1,0 +1,76 @@
+From 6c3356c5ad39f418e480fc2aca6f972389f1550d Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Wed, 19 Aug 2026 14:36:28 +0200
+Subject: [PATCH 1/2] dpkg: build in a fixed path inside the schroot
+
+sbuild falls back to mktemp -d /build/<package>-XXXXXX when BUILD_PATH is
+empty, so every build runs under a different absolute path. That path ends
+up in the build artifacts: build systems that do not honour dpkg's
+-ffile-prefix-map write it verbatim into generated files and object files,
+and even for the ones that do it still perturbs the unstripped link output,
+so the linker computes a different GNU build-id on every rebuild.
+
+The result is that binary packages and their -dbgsym counterparts get a new
+checksum on every from-source rebuild although the shipped code and debug
+info are byte-identical. Downstream this invalidates the generated
+dpkg-prebuilt recipes and cascades through the whole sstate cache.
+
+Use /build/${PN} instead, which is stable across rebuilds. It has to be
+keyed on PN rather than on the source package, because recipe variants such
+as ${PN}-native share DEBIAN_SOURCE and bitbake builds them concurrently.
+
+The random names also served as isolation: the default sbuild fstab
+bind-mounts /var/lib/sbuild/build over /build, so /build is shared by every
+schroot session on the host. Drop that bind mount from the generated session
+fstab, which puts /build in the session overlay. Concurrent sessions can
+then no longer see each other's build path, and an aborted build cannot
+leave a non-empty build path behind that makes the next one fail.
+---
+ meta/classes-recipe/dpkg.bbclass   | 9 ++++++++-
+ meta/classes-recipe/sbuild.bbclass | 4 ++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/meta/classes-recipe/dpkg.bbclass b/meta/classes-recipe/dpkg.bbclass
+index c1c38184..7cff83b4 100644
+--- a/meta/classes-recipe/dpkg.bbclass
++++ b/meta/classes-recipe/dpkg.bbclass
+@@ -11,6 +11,12 @@ dpkg_runbuild[vardepsexclude] += "${DPKG_BUILD_TIMEOUT}"
+ 
+ DPKG_PREBUILD_ENV_FILE="${WORKDIR}/dpkg_prebuild.env"
+ 
++# Build path inside the schroot. Left empty, sbuild would use a random
++# /build/<package>-XXXXXX directory, which leaks into the build artifacts.
++# Keyed on PN, not on the source package, because recipe variants such as
++# ${PN}-native share DEBIAN_SOURCE and are built concurrently.
++SBUILD_BUILD_PATH ?= "/build/${PN}"
++
+ # bitbake variables that should be passed into sbuild env
+ # Note: must not have any logical influence on the generated package
+ SBUILD_PASSTHROUGH_ADDITIONS ?= ""
+@@ -123,7 +129,8 @@ dpkg_runbuild() {
+         --finished-build-commands="rm -f ${deb_dir}/sbuild-build-depends-*-dummy_*.deb" \
+         --finished-build-commands="find ${deb_dir} -maxdepth 1 -type f -name '*.deb' -print -exec cp ${CP_FLAGS} -t ${ext_deb_dir}/ {} +" \
+         --finished-build-commands="cp /var/log/dpkg.log ${ext_root}/dpkg_partial.log" \
+-        --build-path="" --build-dir=${WORKDIR} --dist="${DEBDISTRONAME}" ${DSC_FILE}
++        --build-path="${SBUILD_BUILD_PATH}" --build-dir=${WORKDIR} \
++        --dist="${DEBDISTRONAME}" ${DSC_FILE}
+ 
+     sbuild_dpkg_log_export "${WORKDIR}/rootfs/dpkg_partial.log"
+     deb_dl_dir_export "${WORKDIR}/rootfs" "${distro}"
+diff --git a/meta/classes-recipe/sbuild.bbclass b/meta/classes-recipe/sbuild.bbclass
+index 95dadee3..a1810541 100644
+--- a/meta/classes-recipe/sbuild.bbclass
++++ b/meta/classes-recipe/sbuild.bbclass
+@@ -43,6 +43,10 @@ EOF
+         cp -rf "${SCHROOT_CONF}/sbuild" "${SBUILD_CONF_DIR}"
+         sbuild_fstab="${SBUILD_CONF_DIR}/fstab"
+ 
++        # Drop the shared /build bind mount so that /build lives in the session
++        # overlay and a fixed build path cannot be shared between sessions
++        sed -i '/^[^#].*[[:space:]]\/build[[:space:]]/d' ${sbuild_fstab}
++
+         fstab_baseapt="${REPO_BASE_DIR} /base-apt none rw,bind,private 0 0"
+         grep -qxF "${fstab_baseapt}" ${sbuild_fstab} || echo "${fstab_baseapt}" >> ${sbuild_fstab}
+ 
+-- 
+2.47.3

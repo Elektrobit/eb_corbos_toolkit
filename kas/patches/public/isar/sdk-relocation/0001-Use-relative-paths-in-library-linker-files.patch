@@ -1,0 +1,33 @@
+From 1f01db2ae87736f3456fd6836771352c011de518 Mon Sep 17 00:00:00 2001
+From: Matthias Beckert <matthias.beckert@elektrobit.com>
+Date: Thu, 5 Mar 2026 09:46:45 +0000
+Subject: [PATCH 1/3] Use relative paths in library linker files
+
+[Sergei Koziakov <Sergei.Koziakov@elektrobit.com>: updated patch to work on commit 34c3cda5]
+---
+ meta/classes-recipe/sdk.bbclass | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/meta/classes-recipe/sdk.bbclass b/meta/classes-recipe/sdk.bbclass
+index 6f09b5f6..27641b43 100644
+--- a/meta/classes-recipe/sdk.bbclass
++++ b/meta/classes-recipe/sdk.bbclass
+@@ -107,6 +107,16 @@ sdkchroot_finalize() {
+             sudo ln -sf gcc-sysroot-wrapper.sh ${tool}
+         done
+     done
++
++    # Use relative paths in linker files
++    for lib in $(find ${ROOTFSDIR} -type f \( -name '*.so' -o -name '*.a' \)); do
++        if grep -Ilq -E '(^/\* GNU ld script|^[[:space:]]*(GROUP|INPUT)[[:space:]]*\()' $lib; then
++            echo "Fixing absolute path in $lib"
++            sudo sed -i 's#/usr/\(x86_64\|aarch64\|arm\|riscv64\)-linux-gnu/lib/##g' $lib
++            sudo sed -i 's#/usr/lib/\(x86_64\|aarch64\|arm\|riscv64\)-linux-gnu/##g' $lib
++            sudo sed -i 's#/lib/\(x86_64\|aarch64\|arm\|riscv64\)-linux-gnu/##g' $lib
++        fi
++    done
+ }
+ 
+ do_deploy_sdkchroot[dirs] = "${DEPLOY_DIR_SDKCHROOT}"
+-- 
+2.47.3

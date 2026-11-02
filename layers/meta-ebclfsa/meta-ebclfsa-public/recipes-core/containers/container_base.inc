@@ -3,7 +3,7 @@
 inherit ebclfsa_devcontainer
 
 # Just a placeholder, the container name shall contain the real registry path (could also be ghcr.io)
-CONTAINER_IMAGE_NAME = "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:RFI_v2.0.0-beta3-${PN}-${DISTRO_ARCH}"
+CONTAINER_IMAGE_NAME = "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:RFI_remove-isar-checkout-from-public-delivery-${PN}-${DISTRO_ARCH}"
 CONTAINER_IMAGE_TAG = "local"
 CONTAINER_IMAGE_CMD = "/bin/bash"
 

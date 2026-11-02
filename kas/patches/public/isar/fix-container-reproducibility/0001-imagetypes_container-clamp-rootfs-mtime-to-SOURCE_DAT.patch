@@ -1,0 +1,68 @@
+From 853a241bcb9eab358eabd063867d1bdfc3308376 Mon Sep 17 00:00:00 2001
+From: developer <developer@elektrobit.com>
+Date: Mon, 17 Aug 2026 10:00:00 +0200
+Subject: [PATCH] imagetypes_container: make container images reproducible
+
+Ensure fully reproducible container images by:
+- Clamping the rootfs root directory mtime to SOURCE_DATE_EPOCH
+- Passing --history.created to umoci repack
+- Setting the image created timestamp via umoci config --created
+- Using --no-history on intermediate umoci config calls
+
+Signed-off-by: developer <developer@elektrobit.com>
+---
+ meta/classes-recipe/imagetypes_container.bbclass | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/meta/classes-recipe/imagetypes_container.bbclass b/meta/classes-recipe/imagetypes_container.bbclass
+index e07ce8e6..099dbb2e 100644
+--- a/meta/classes-recipe/imagetypes_container.bbclass
++++ b/meta/classes-recipe/imagetypes_container.bbclass
+@@ -33,6 +33,7 @@ do_containerize() {
+     local tag="${CONTAINER_IMAGE_TAG}"
+     local path="${CONTAINER_IMAGE_PATH}"
+     local oci_img_dir="${WORKDIR}/oci-image"
++    local sde_iso="$(date --iso-8601=s -u -d @${SOURCE_DATE_EPOCH})"
+     local rootfs="${IMAGE_ROOTFS}"
+ 
+     # prepare OCI container image skeleton
+@@ -42,15 +43,15 @@ do_containerize() {
+     sudo umoci new --image "${oci_img_dir}:${empty_tag}"
+     if [ -n "${cmd}" ]; then
+         sudo umoci config --image "${oci_img_dir}:${empty_tag}" \
+-            --config.cmd="${cmd}"
++            --no-history --config.cmd="${cmd}"
+     fi
+     if [ -n "${entrypoint}" ]; then
+         sudo umoci config --image "${oci_img_dir}:${empty_tag}" \
+-            --config.entrypoint="${entrypoint}"
++            --no-history --config.entrypoint="${entrypoint}"
+     fi
+     if [ -n "${path}" ]; then
+         sudo umoci config --image "${oci_img_dir}:${empty_tag}" \
+-            --config.env="PATH=${path}"
++            --no-history --config.env="PATH=${path}"
+     fi
+     sudo umoci unpack --image "${oci_img_dir}:${empty_tag}" \
+         "${oci_img_dir}_unpacked"
+@@ -60,10 +61,18 @@ do_containerize() {
+     # clean-up temporary files
+     sudo find "${oci_img_dir}_unpacked/rootfs/tmp" -mindepth 1 -delete
+ 
++    # clamp root directory mtime for reproducible container images
++    sudo touch -h -d@${SOURCE_DATE_EPOCH} "${oci_img_dir}_unpacked/rootfs"
++
+     # pack container image
+     bbdebug 1 "pack container image"
+     sudo umoci repack --image "${oci_img_dir}:${tag}" \
++        --history.created="${sde_iso}" \
+         "${oci_img_dir}_unpacked"
++
++    # set image created timestamp for reproducibility
++    sudo umoci config --image "${oci_img_dir}:${tag}" \
++        --no-history --created="${sde_iso}"
+     sudo umoci remove --image "${oci_img_dir}:${empty_tag}"
+     sudo rm -rf "${oci_img_dir}_unpacked"
+ 
+-- 
+2.47.3
