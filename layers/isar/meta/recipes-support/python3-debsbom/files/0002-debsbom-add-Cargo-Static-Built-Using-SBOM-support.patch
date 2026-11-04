@@ -1,5 +1,5 @@
 From 73604e9c68e7eaf28ee2bc7483f127780ee1be64 Mon Sep 17 00:00:00 2001
-From: Matthias Beckert <matthias.beckert@elektrobit.com>
+From: Elektrobit <info@elektrobit.com>
 Date: Tue, 6 Oct 2026 16:51:48 +0200
 Subject: [PATCH] debsbom: add Cargo Static-Built-Using SBOM support
 

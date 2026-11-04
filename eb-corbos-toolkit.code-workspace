@@ -38,6 +38,10 @@
 		"[yaml]": {
 			"editor.defaultFormatter": "redhat.vscode-yaml"
 		},
+		// Trailing whitespace in patch context lines is significant.
+		"[diff]": {
+			"files.trimTrailingWhitespace": false
+		},
 		"yaml.format.printWidth": 1000
 	},
 	"tasks": {

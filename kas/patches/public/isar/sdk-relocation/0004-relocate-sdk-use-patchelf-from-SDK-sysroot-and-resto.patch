@@ -1,0 +1,73 @@
+From aec476d16f6c52d1a8042caab43eab968a8d1429 Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Fri, 28 Aug 2026 16:03:17 +0200
+Subject: [PATCH] relocate-sdk: use patchelf from SDK sysroot and restore
+ libc.so.6
+
+Run the patchelf shipped in the SDK itself instead of relying on a
+host-installed patchelf, which may be missing or an incompatible
+version. This minimizes the dependency on host tooling.
+
+patchelf lives inside the tree that is about to be rewritten, so
+operate on a copy - and invoke that copy directly, keeping its own
+(unmodified) interpreter intact: like every other SDK host tool
+binary, it relies on the host's libc.so.6 until this script has run,
+and forcing it through a different loader would reintroduce the
+interpreter/libc.so.6 mismatch this script fixes for every other
+binary.
+
+Also symlink the SDK's own libc.so.6 back onto the rpath once a
+binary's interpreter has been repointed at the SDK's own loader, so
+libc.so.6 is resolved via rpath again and both the loader and
+libc.so.6 come from the SDK.
+---
+ .../sdk-files/files/relocate-sdk.sh           | 27 ++++++++++++++++++-
+ 1 file changed, 26 insertions(+), 1 deletion(-)
+
+diff --git a/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh b/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh
+index 4c07eba7..8eb181a9 100755
+--- a/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh
++++ b/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh
+@@ -20,7 +20,23 @@ case "$1" in
+ 	;;
+ esac
+ 
+-if [ -z $(which patchelf 2>/dev/null) ]; then
++# Prefer the patchelf shipped inside the SDK itself. It lives inside the
++# tree that is about to be rewritten by the loop below, so operate on a
++# copy instead of the original, and run that copy directly: it must keep
++# using its own (unmodified) interpreter, since - like every other SDK
++# host tool binary - it relies on the host's libc.so.6 until this script
++# has run, and forcing it through a different loader would reintroduce
++# the interpreter/libc.so.6 mismatch this script fixes for every other
++# binary.
++sdk_patchelf=${sdkroot}/usr/bin/patchelf
++if [ -x "${sdk_patchelf}" ]; then
++	patchelf_tmpdir=$(mktemp -d)
++	cp "${sdk_patchelf}" "${patchelf_tmpdir}/patchelf"
++	trap 'rm -rf "${patchelf_tmpdir}"' EXIT
++	patchelf() {
++		"${patchelf_tmpdir}/patchelf" "$@"
++	}
++elif [ -z "$(which patchelf 2>/dev/null)" ]; then
+ 	echo "Please install 'patchelf' package first."
+ 	exit 1
+ fi
+@@ -29,6 +45,15 @@ echo -n "Adjusting path of SDK to '${new_sdkroot}'... "
+ 
+ sdk_rpath="${new_sdkroot}/usr/lib:${new_sdkroot}/usr/lib/${arch}-linux-gnu"
+ 
++# Make the SDK's own libc.so.6 visible on the rpath again. It is hidden by
++# default (moved into this subdirectory during the SDK build) so unmodified
++# binaries fall back to the host's libc.so.6, matching their untouched host
++# loader.
++sdk_libc_dir="${sdkroot}/usr/lib/${arch}-linux-gnu"
++if [ -f "${sdk_libc_dir}/sdk-libc/libc.so.6" ] && [ ! -e "${sdk_libc_dir}/libc.so.6" ]; then
++	ln -s sdk-libc/libc.so.6 "${sdk_libc_dir}/libc.so.6"
++fi
++
+ for binary in $(find ${sdkroot}/usr/bin ${sdkroot}/usr/sbin \
+ 	${sdkroot}/usr/lib/gcc* ${sdkroot}/usr/libexec/gcc* \
+ 	${sdkroot}/usr/lib/llvm*/bin \
+-- 
+2.47.3

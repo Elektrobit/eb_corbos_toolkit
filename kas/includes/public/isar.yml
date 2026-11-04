@@ -6,6 +6,7 @@ header:
 repos:
   isar:
     path: "layers/isar"
+    url: "https://github.com/ilbers/isar.git"
     commit: "cc5a5d98a89ca19049575b94b71a0beeafa61c71"
     branch:
     layers:
@@ -15,40 +16,40 @@ repos:
     patches:
       bootstrap-from-local-isar-apt:
         repo: isar
-        path: "../../internal/isar-patches/bootstrap-from-local-isar-apt"
+        path: "../../kas/patches/public/isar/bootstrap-from-local-isar-apt"
       multiarch-fixes:
         repo: isar
-        path: "../../internal/isar-patches/multiarch-fixes"
+        path: "../../kas/patches/public/isar/multiarch-fixes"
       fix-premirrors:
         repo: isar
-        path: "../../internal/isar-patches/fix-premirrors"
+        path: "../../kas/patches/public/isar/fix-premirrors"
       sdk-relocation:
         repo: isar
-        path: "../../internal/isar-patches/sdk-relocation"
+        path: "../../kas/patches/public/isar/sdk-relocation"
       fix-buildstats:
         repo: isar
-        path: "../../internal/isar-patches/fix-buildstats"
+        path: "../../kas/patches/public/isar/fix-buildstats"
       sbom-python-fixes:
         repo: isar
-        path: "../../internal/isar-patches/sbom-python-fixes"
+        path: "../../kas/patches/public/isar/sbom-python-fixes"
       fix-symlink-race-condition:
         repo: isar
-        path: "../../internal/isar-patches/fix-symlink-race-condition"
+        path: "../../kas/patches/public/isar/fix-symlink-race-condition"
       fix-isar-apt-pool-race:
         repo: isar
-        path: "../../internal/isar-patches/fix-isar-apt-pool-race"
+        path: "../../kas/patches/public/isar/fix-isar-apt-pool-race"
       fix-container-reproducibility:
         repo: isar
-        path: "../../internal/isar-patches/fix-container-reproducibility"
+        path: "../../kas/patches/public/isar/fix-container-reproducibility"
       fix-sstate-workdir-removal:
         repo: isar
-        path: "../../internal/isar-patches/fix-sstate-workdir-removal"
+        path: "../../kas/patches/public/isar/fix-sstate-workdir-removal"
       gitignore:
         repo: isar
-        path: "../../internal/isar-patches/gitignore"
+        path: "../../kas/patches/public/isar/gitignore"
       reproducible-builds:
         repo: isar
-        path: "../../internal/isar-patches/reproducible-builds"
+        path: "../../kas/patches/public/isar/reproducible-builds"
 
 local_conf_header:
   kernel: |

@@ -1,0 +1,48 @@
+From b0bf420121d69e26ab90f83c23e34adab3b3fc3d Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Fri, 10 Apr 2026 00:00:00 +0000
+Subject: [PATCH 1/2] rootfs: hold isar-apt lock through install to prevent
+ pool race
+
+The shared isar-apt lock was released after rootfs_install_pkgs_download,
+but rootfs_install_pkgs_install still reads from the live isar-apt bind
+mount. A concurrent do_deploy_deb task (which holds the exclusive lock)
+can run reprepro removefilter + includedeb between download and install,
+momentarily removing pool files. This causes apt-get install to fail
+with:
+
+  E: Failed to fetch file:/isar-apt/pool/main/.../foo.deb
+    File not found (2: No such file or directory)
+
+Move the "release-after" annotation from rootfs_install_pkgs_download to
+rootfs_install_pkgs_install so the shared lock is held through the entire
+download-export-install sequence, preventing concurrent do_deploy_deb
+from modifying the pool.
+
+Signed-off-by: Elektrobit <info@elektrobit.com>
+---
+ meta/classes-recipe/rootfs.bbclass | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta/classes-recipe/rootfs.bbclass b/meta/classes-recipe/rootfs.bbclass
+index 8b502a50..5aa161bb 100644
+--- a/meta/classes-recipe/rootfs.bbclass
++++ b/meta/classes-recipe/rootfs.bbclass
+@@ -337,7 +337,6 @@ rootfs_import_package_cache() {
+ ROOTFS_INSTALL_COMMAND += "rootfs_install_pkgs_download"
+ rootfs_install_pkgs_download[weight] = "600"
+ rootfs_install_pkgs_download[progress] = "custom:rootfs_progress.PkgsDownloadProgressHandler"
+-rootfs_install_pkgs_download[isar-apt-lock] = "release-after"
+ rootfs_install_pkgs_download[network] = "${TASK_USE_NETWORK}"
+ rootfs_install_pkgs_download() {
+     mkdir -p "${WORKDIR}/dpkg"
+@@ -376,6 +375,7 @@ EOSUDO
+ ROOTFS_INSTALL_COMMAND += "rootfs_install_pkgs_install"
+ rootfs_install_pkgs_install[weight] = "8000"
+ rootfs_install_pkgs_install[progress] = "custom:rootfs_progress.PkgsInstallProgressHandler"
++rootfs_install_pkgs_install[isar-apt-lock] = "release-after"
+ rootfs_install_pkgs_install[network] = "${TASK_USE_SUDO}"
+ rootfs_install_pkgs_install() {
+     sudo -E chroot "${ROOTFSDIR}" \
+-- 
+2.47.3
