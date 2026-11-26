@@ -1,9 +1,0 @@
-#!/bin/sh
-# we need to do this once right after install, so we can install this at any
-# time and do not need to be "the first" package
-# what we delete needs to be in sync with the dpkg configuration we ship
-
-set -e
-
-find /usr/share/man/ ! -type d -exec rm -f {} \;
-find /usr/share/doc/ ! -type d ! -name "copyright" ! -name "changelog.*" -exec rm -f {} \;

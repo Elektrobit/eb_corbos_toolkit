@@ -1,9 +1,0 @@
-# This software is a part of Isar.
-# Copyright (c) Siemens AG, 2024
-
-header:
-  version: 14
-
-local_conf_header:
-  package-prebuilt-docker-img: |
-    IMAGE_INSTALL:append = " prebuilt-docker-img"

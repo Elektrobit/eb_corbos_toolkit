@@ -1,7 +1,0 @@
-# This software is a part of Isar.
-# Copyright (C) 2023 ilbers GmbH
-
-header:
-  version: 14
-
-machine: sifive-fu540
