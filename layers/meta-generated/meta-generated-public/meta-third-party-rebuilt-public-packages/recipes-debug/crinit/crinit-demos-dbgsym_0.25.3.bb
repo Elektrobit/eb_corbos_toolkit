@@ -12,9 +12,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/c/crinit/crinit-demos-dbgsym_0.25.3_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "dc928fd6d28cd8df9fe41535b330bede"
-SRC_URI[deb0.sha1sum] = "58b59ee759dca1b717f0cb59d5841e9af42853e4"
-SRC_URI[deb0.sha256sum] = "df396225e1ccb191cf936d4d87a26a8308943b5a1d067ca22f3a26875b6f87cd"
+SRC_URI[deb0.md5sum] = "d5f464aac2385e60252fa9b6fb010c76"
+SRC_URI[deb0.sha1sum] = "0df50ed1061edaf864f28bd6abd75f5efd90e6d7"
+SRC_URI[deb0.sha256sum] = "13e406d9b6a23ccf19fccdf00aaf432c4add576816ab82ff93d7f1327ba8ca70"
 
 RDEPENDS = " \
     crinit-demos \

@@ -1,0 +1,46 @@
+From 5d1c3a0b7e2f4a6c9b8d1e0f3a4b5c6d7e8f9a0b Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Tue, 10 Nov 2026 13:00:00 +0100
+Subject: [PATCH] relocate-sdk: patch RUNPATH of SDK shared libraries
+
+Shared libraries such as libLLVM and libclang-cpp carry their own
+RUNPATH ($ORIGIN/../lib). If a library has a RUNPATH, the dynamic
+loader ignores the DT_RPATH of the executable when resolving that
+library's dependencies, so e.g. clang++ still loaded libz3, libffi,
+libedit, libxml2, libz and libzstd from the host after relocation.
+
+Also rewrite the RPATH of such libraries so that they find their
+dependencies in the SDK sysroot.
+---
+ .../sdk-files/files/relocate-sdk.sh           | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh b/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh
+index 26f706aa..65add2d2 100755
+--- a/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh
++++ b/meta/recipes-devtools/sdk-files/files/relocate-sdk.sh
+@@ -85,6 +85,22 @@ for binary in $(find ${sdkroot}/usr/bin ${sdkroot}/usr/sbin \
+ 	fi
+ done
+ 
++# Shared libraries with their own RUNPATH (e.g. libLLVM, libclang-cpp) make the
++# dynamic loader ignore the RPATH of the executable when resolving their
++# dependencies, so those would fall back to the host's libraries. Give them the
++# SDK library paths as well.
++for lib in $(find ${sdkroot}/usr/lib/${arch}-linux-gnu ${sdkroot}/usr/lib/llvm*/lib \
++	-maxdepth 1 -type f -name '*.so*' 2>/dev/null); do
++	existing_rpath=$(patchelf --print-rpath ${lib} 2>/dev/null)
++	origin_entries=$(echo "${existing_rpath}" | tr ':' '\n' | \
++		grep '^\$ORIGIN' | tr '\n' ':' | sed 's/:$//')
++	if [ -n "${origin_entries}" ]; then
++		patchelf --set-rpath ${origin_entries}:${sdk_rpath} \
++			--force-rpath \
++			${lib} 2>/dev/null
++	fi
++done
++
+ sed -i 's|^GCC_SYSROOT=.*|GCC_SYSROOT="'"${new_sdkroot}"'"|' \
+     ${sdkroot}/usr/bin/gcc-sysroot-wrapper.sh
+ 
+-- 
+2.47.3

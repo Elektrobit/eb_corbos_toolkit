@@ -1,0 +1,4 @@
+0001-mmdebstrap-Make-use-of-defined-variables.patch
+0002-mmdebstrap-Include-isar-apt-in-bootstrapping-sources.patch
+0003-mmdebstrap-Allow-for-DISTRO_SOURCE-to-be-empty.patch
+0004-mmdebstrap-lock-isar-apt-while-bootstrapping.patch

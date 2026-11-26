@@ -5,6 +5,17 @@
 [[ -n "${_DEVCONTAINER_LIB_SH:-}" ]] && return 0
 _DEVCONTAINER_LIB_SH=1
 
+# Delivery-variant specific includes. Only the ones belonging to the delivery are present;
+# variants are sourced in a specific order; later ones may extend or override earlier ones.
+_dc_lib_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+for _dc_variant in public core internal; do
+  if [[ -f "${_dc_lib_dir}/${_dc_variant}.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "${_dc_lib_dir}/${_dc_variant}.sh"
+  fi
+done
+unset _dc_lib_dir _dc_variant
+
 dc_script_dir() {
   cd -- "$(dirname -- "${BASH_SOURCE[1]}")" && pwd
 }

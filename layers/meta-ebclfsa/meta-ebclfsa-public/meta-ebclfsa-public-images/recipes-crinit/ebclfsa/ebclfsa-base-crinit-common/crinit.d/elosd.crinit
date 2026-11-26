@@ -1,8 +1,9 @@
 # loads the event log scanner (elos)
 NAME = elosd
 
+# elosd listens on 127.0.0.1, which netifd assigns to lo asynchronously.
 COMMAND = /bin/mkdir -p /run/elos
-          /usr/bin/elosd
+          /bin/sh -c "while ! ip -4 address show dev lo up | grep -q 'inet 127.0.0.1/'; do sleep 1; done; exec /usr/bin/elosd"
 
 DEPENDS = @provided:fstab @provided:tmpdir @provided:machine-id @provided:network
 

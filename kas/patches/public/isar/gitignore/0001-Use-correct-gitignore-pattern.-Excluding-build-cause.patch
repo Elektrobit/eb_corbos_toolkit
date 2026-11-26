@@ -1,0 +1,23 @@
+From fc0e38d2904b05d7c980aeaac85b61a67de53393 Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Tue, 18 Aug 2026 07:27:37 +0200
+Subject: [PATCH] Use correct gitignore pattern. Excluding build* causes
+ loosing a lot files (named, build*) when creating a new repo from scratch.
+
+---
+ .gitignore | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/.gitignore b/.gitignore
+index fff155f1..68b555e8 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -3,4 +3,5 @@
+ __pycache__
+ .config.yaml*
+ .kas_shell_history
+-build*
++/build/
++/build-*/
+-- 
+2.47.3

@@ -1,0 +1,56 @@
+From 27b7c775b10b18a1fbc6fbab66582bdd09883f3e Mon Sep 17 00:00:00 2001
+From: Andreas Naumann <anaumann@emlix.com>
+Date: Thu, 7 Aug 2025 17:40:42 +0200
+Subject: [PATCH 4/4] mmdebstrap: lock isar-apt while bootstrapping
+
+isar-apt must not change while we bootstrap from it. Otherwise, e.g.
+if a dpkg recipe deploys a deb-file into it, the Releases or Packages
+file may not match the hash which causes apt to stop with an error.
+
+In order to use the bitbake lockfile flag on the entire task, which
+is preferred to a flock-wrap around the mmdebstrap command, move code
+with conflicting locking to a new finalize task.
+
+Signed-off-by: Andreas Naumann <anaumann@emlix.com>
+Upstream-Status: Submitted [https://groups.google.com/g/isar-users/c/TAxC2OjxQq8/m/YgMQ9KHcAwAJ]
+---
+ meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc b/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
+index 767a86f1..36be295d 100644
+--- a/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
++++ b/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
+@@ -122,6 +122,7 @@ do_bootstrap[network] = "${TASK_USE_NETWORK_AND_SUDO}"
+ DEB_DL_LOCK ?= "${DEBDIR}/${BOOTSTRAP_BASE_DISTRO}-${BASE_DISTRO_CODENAME}.lock"
+ 
+ do_bootstrap[vardeps] += "DISTRO_BOOTSTRAP_BASE_PACKAGES"
++do_bootstrap[lockfiles] = "${REPO_ISAR_DIR}/isar.lock"
+ do_bootstrap() {
+     if [ "${ISAR_ENABLE_COMPAT_ARCH}" = "1" ]; then
+         if [ -z "${COMPAT_DISTRO_ARCH}" ]; then
+@@ -259,7 +260,10 @@ do_bootstrap() {
+                    "${@get_distro_suite(d)}" \
+                    "${WORKDIR}/rootfs.tar.zst" \
+                    "$bootstrap_list"
++}
++addtask bootstrap before do_build after do_generate_keyrings
+ 
++do_bootstrap_finalize() {
+     # Finalize bootstrap by setting the link in deploy
+     sudo ln -Tfsr "${WORKDIR}/rootfs.tar.zst" "${DEPLOY_ISAR_BOOTSTRAP}.tar.zst"
+ 
+@@ -268,9 +272,9 @@ do_bootstrap() {
+         sudo rm -rf --one-file-system "${WORKDIR}/dl_dir"
+     fi
+ }
+-addtask bootstrap before do_build after do_generate_keyrings
++addtask do_bootstrap_finalize after do_bootstrap before do_build
+ 
+-SSTATETASKS += "do_bootstrap"
++SSTATETASKS += "do_bootstrap do_bootstrap_finalize"
+ SSTATECREATEFUNCS += "bootstrap_sstate_prepare"
+ SSTATEPOSTINSTFUNCS += "bootstrap_sstate_finalize"
+ 
+-- 
+2.47.3

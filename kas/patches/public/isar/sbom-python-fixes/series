@@ -1,0 +1,3 @@
+0001-SBOM-use-ebclfsa_dpkg_python-in-the-isar-packages.patch
+0002-SBOM-update-debsbom-remote-url-to-release.patch
+0003-SBOM-add-Cargo-Static-Built-Using-SBOM-support.patch

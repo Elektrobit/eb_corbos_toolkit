@@ -24,9 +24,9 @@ SRC_URI = " \
     ${REPO_THIRD_PARTY_REBUILT_BY_ELEKTROBIT}/pool/main/c/crinit/crinit-ctl_0.25.3_arm64.deb;name=deb0 \
 "
 
-SRC_URI[deb0.md5sum] = "031bbf9e7b0962717c109a8d8dcfe582"
-SRC_URI[deb0.sha1sum] = "e6b81589a87d72453802e86e95dc99d39ff607d1"
-SRC_URI[deb0.sha256sum] = "1279567b77f91d4ad5bbf3ff225265e3aa70ce16ffe79feb65c5e364ad7c391b"
+SRC_URI[deb0.md5sum] = "0227bb7fd0de376d99643f4094fc3c5c"
+SRC_URI[deb0.sha1sum] = "2c2db263dcba0c7a313fdaa75f0efdc956b7ee80"
+SRC_URI[deb0.sha256sum] = "3dd1959f5c870429dc420ff961c33cc35a4ddd3d8007133623c628d879938a94"
 
 RDEPENDS = " \
     crinit \

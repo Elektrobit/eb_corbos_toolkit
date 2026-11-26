@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 # Copyright 2026 Elektrobit. All rights reserved.
 # Configure and validate credentials for the devcontainer.
+#
+# This script is a standalone tool: users run it manually to (re-)enter credentials, so it keeps a
+# stable path. It is also run by the lifecycle hook script
+# lifecycle/postStartCommand.d/public/30_credentials.build.sh (and thereby by scripts/run.sh and CI),
+# which only forwards its arguments here. See lifecycle/README.md.
+#
+# Usage: setup_credentials.sh [--check]
+#   (no option)  Run all setup_credentials.d plugins; they may ask for missing credentials.
+#   --check      Only validate; never prompts. Prints instructions if credentials are missing.
+#
+# The credentials file defaults to credentials.netrc in the devcontainer directory and can be
+# overridden with the CREDENTIALS_NETRC environment variable (see lib/common.inc).
 
 set -euo pipefail
 
@@ -32,7 +44,10 @@ if $check_only; then
         missing_credentials=false
     fi
 else
-    dc_run_plugins "$setup_dir" "$credentials_file"
+    if ! dc_run_plugins "$setup_dir" "$credentials_file"; then
+        dc_error "Credential setup failed (a plugin returned an error; are you running without a terminal?)."
+        exit 1
+    fi
 fi
 
 if $missing_credentials; then
