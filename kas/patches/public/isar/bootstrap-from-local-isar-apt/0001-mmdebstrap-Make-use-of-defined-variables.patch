@@ -1,0 +1,42 @@
+From b01ca9d6d9e234607334ffe404a775ecc0e4332b Mon Sep 17 00:00:00 2001
+From: Andreas Naumann <anaumann@emlix.com>
+Date: Fri, 1 Aug 2025 15:15:36 +0200
+Subject: [PATCH 1/4] mmdebstrap: Make use of defined variables
+
+Signed-off-by: Andreas Naumann <anaumann@emlix.com>
+Upstream-Status: Submitted [https://groups.google.com/g/isar-users/c/aJiaBfDycWs/m/OpiroqHcAwAJ]
+---
+ meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc b/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
+index 6c2cb170..d0b3ff0c 100644
+--- a/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
++++ b/meta/recipes-core/isar-mmdebstrap/isar-mmdebstrap.inc
+@@ -142,12 +142,12 @@ do_bootstrap() {
+         if [ -z "${BASE_REPO_KEY}" ]; then
+             line="[trusted=yes] ${line}"
+         fi
+-        echo "deb ${line}" >  "${WORKDIR}/sources.list.d/base-apt.list"
++        echo "deb ${line}" >  "$bootstrap_list"
+         line="copy://$base_apt_tmp/${BASE_DISTRO} ${BASE_DISTRO_CODENAME} main"
+         if [ -z "${BASE_REPO_KEY}" ]; then
+             line="[trusted=yes] ${line}"
+         fi
+-        echo "deb-src ${line}" >>  "${WORKDIR}/sources.list.d/base-apt.list"
++        echo "deb-src ${line}" >>  "$bootstrap_list"
+ 
+         # no need to sync /var/cache/apt/archives if base-apt used
+         syncin='echo skip sync-in'
+@@ -173,8 +173,7 @@ do_bootstrap() {
+         deb_dl_dir_import "${WORKDIR}/dl_dir" "${BOOTSTRAP_BASE_DISTRO}-${BASE_DISTRO_CODENAME}"
+ 
+         bootstrap_list="${WORKDIR}/sources.list.d/bootstrap.list"
+-        install -v -m644 "${APTSRCS}" \
+-                         "${WORKDIR}/sources.list.d/bootstrap.list"
++        install -v -m644 "${APTSRCS}" "$bootstrap_list"
+ 
+         syncin='flock -s ${DEB_DL_LOCK} cp -n --no-preserve=owner \
+                       "${WORKDIR}/dl_dir/var/cache/apt/archives/"*.deb \
+-- 
+2.47.3

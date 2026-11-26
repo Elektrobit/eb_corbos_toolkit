@@ -1,0 +1,42 @@
+From 515b9f0e4ea4da403c5ad86b969c2cd0f919d081 Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Mon, 10 Nov 2025 17:15:05 +0100
+Subject: [PATCH] bitbake: lib: bb: fetch2: use BASENAME if available
+
+When combining (PRE)MIRRORS with the downloadfilename option the wrong
+filename is used in the mapped mirror URL. Instead of the original
+filename, the filename from downloadfilename is used. Modify this
+behaviour to use the original filename instead.
+
+Without (PRE)MIRRORS:
+
+    DEBUG: For url https://github.com/GROUP/PACKAGE/archive/refs/tags/TAG.tar.gz returning https://internal.proxy.url/github/GROUP/PACKAGE/archive/refs/tags/TAG.tar.gz
+
+With (PRE)MIRRORS:
+
+    DEBUG: For url https://github.com/GROUP/PACKAGE/archive/refs/tags/TAG.tar.gz;downloadfilename=PACKAGE-TAG.tar.gz returning https://internal.proxy.url/github/GROUP/PACKAGE/archive/refs/tags/PACKAGE-TAG.tar.gz;downloadfilename=PACKAGE-TAG.tar.gz
+
+Note that the filename component of the URL in the second example is
+"PACKAGE-TAG.tar.gz", rather than "TAG.tar.gz".
+
+Signed-off-by: Elektrobit <info@elektrobit.com>
+Upstream-status: Inappropriate [waiting on response from upstream regarding intended behaviour]
+---
+ bitbake/lib/bb/fetch2/__init__.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/bitbake/lib/bb/fetch2/__init__.py b/bitbake/lib/bb/fetch2/__init__.py
+index 5bf2c4b8..50f555f4 100644
+--- a/bitbake/lib/bb/fetch2/__init__.py
++++ b/bitbake/lib/bb/fetch2/__init__.py
+@@ -470,6 +470,8 @@ def uri_replace(ud, uri_find, uri_replace, replacements, d, mirrortarball=None):
+                     # Kill parameters, they make no sense for mirror tarballs
+                     uri_decoded[5] = {}
+                     uri_find_decoded[5] = {}
++                elif "BASENAME" in replacements and ud.method.supports_checksum(ud):
++                    basename =  replacements["BASENAME"]
+                 elif ud.localpath and ud.method.supports_checksum(ud):
+                     basename = os.path.basename(ud.localpath)
+                 if basename:
+-- 
+2.47.3

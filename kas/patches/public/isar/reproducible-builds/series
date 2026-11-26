@@ -1,0 +1,2 @@
+0001-dpkg-build-in-a-fixed-path-inside-the-schroot.patch
+0002-dpkg-source-clamp-source-mtimes-to-SOURCE_DATE_EPOCH.patch

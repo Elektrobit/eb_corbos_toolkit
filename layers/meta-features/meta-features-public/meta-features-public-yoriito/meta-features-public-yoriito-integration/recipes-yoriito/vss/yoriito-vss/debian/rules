@@ -10,8 +10,8 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 # configure or build; install the artifacts directly into the package tree.
 override_dh_auto_install:
 	install -d debian/yoriito-vss/etc/yoriito/viss
-	install -m 0644 artifact/yoriito_vss_v5.0.json \
+	install -m 0644 artifact/yoriito_vss.json \
 		debian/yoriito-vss/etc/yoriito/viss/vss.json
 	install -d debian/yoriito-vss/usr/share/yoriito
-	install -m 0644 artifact/yoriito_vss_v5.0.csv \
+	install -m 0644 artifact/yoriito_vss.csv \
 		debian/yoriito-vss/usr/share/yoriito/

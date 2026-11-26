@@ -85,6 +85,22 @@ for binary in $(find ${sdkroot}/usr/bin ${sdkroot}/usr/sbin \
 	fi
 done
 
+# Shared libraries with their own RUNPATH (e.g. libLLVM, libclang-cpp) make the
+# dynamic loader ignore the RPATH of the executable when resolving their
+# dependencies, so those would fall back to the host's libraries. Give them the
+# SDK library paths as well.
+for lib in $(find ${sdkroot}/usr/lib/${arch}-linux-gnu ${sdkroot}/usr/lib/llvm*/lib \
+	-maxdepth 1 -type f -name '*.so*' 2>/dev/null); do
+	existing_rpath=$(patchelf --print-rpath ${lib} 2>/dev/null)
+	origin_entries=$(echo "${existing_rpath}" | tr ':' '\n' | \
+		grep '^\$ORIGIN' | tr '\n' ':' | sed 's/:$//')
+	if [ -n "${origin_entries}" ]; then
+		patchelf --set-rpath ${origin_entries}:${sdk_rpath} \
+			--force-rpath \
+			${lib} 2>/dev/null
+	fi
+done
+
 sed -i 's|^GCC_SYSROOT=.*|GCC_SYSROOT="'"${new_sdkroot}"'"|' \
     ${sdkroot}/usr/bin/gcc-sysroot-wrapper.sh
 

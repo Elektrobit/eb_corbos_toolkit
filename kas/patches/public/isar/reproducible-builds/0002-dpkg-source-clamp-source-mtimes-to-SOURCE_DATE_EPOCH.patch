@@ -1,0 +1,34 @@
+From b24bfc05bd60d5f5af9fa6148ba8b2907f96f079 Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Wed, 19 Aug 2026 14:36:29 +0200
+Subject: [PATCH 2/2] dpkg-source: clamp source mtimes to SOURCE_DATE_EPOCH
+
+dpkg-source -b records the mtimes of the unpacked sources, which are the
+wall clock time of do_unpack. The generated <source>_<version>.tar.xz and
+.dsc therefore differ on every rebuild even when the extracted content is
+bit-identical.
+
+Clamp the mtimes to SOURCE_DATE_EPOCH before building the source package,
+the same way image.bbclass already does for rootfs contents.
+---
+ meta/classes-recipe/dpkg-source.bbclass | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/meta/classes-recipe/dpkg-source.bbclass b/meta/classes-recipe/dpkg-source.bbclass
+index d14d56aa..8bfceb4f 100644
+--- a/meta/classes-recipe/dpkg-source.bbclass
++++ b/meta/classes-recipe/dpkg-source.bbclass
+@@ -15,6 +15,11 @@ DPKG_SOURCE_EXTRA_ARGS ?= "-I"
+ DEBIAN_SOURCE ?= "${BPN}"
+ 
+ do_dpkg_source() {
++    # Clamp mtimes, otherwise dpkg-source records the wall clock time of
++    # do_unpack and the source package differs on every rebuild
++    find ${WORKDIR}/${PPS} -newermt "@${SOURCE_DATE_EPOCH}" \
++        -exec touch -h -d@${SOURCE_DATE_EPOCH} '{}' +
++
+     # Create a .dsc file from source directory to use it with sbuild
+     DEB_SOURCE_NAME=$(dpkg-parsechangelog --show-field Source --file ${WORKDIR}/${PPS}/debian/changelog)
+     if [ "${DEB_SOURCE_NAME}" != "${DEBIAN_SOURCE}" ]; then
+-- 
+2.47.3

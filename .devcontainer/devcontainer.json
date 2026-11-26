@@ -4,21 +4,17 @@
     "name": "EB corbos Toolkit",
     // the container is updated by CI directly "in place" with the same tag,
     // so we always need to pull the latest image manually before starting the container
-    "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v25",
+    "image": "ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v30",
     // set the tag to local if you are using a locally built image
     // "image": "artifactory.elektrobit.com/eb_corbos_linux-releases-docker/eb-corbos-toolkit/devcontainer-amd64:local",
-    "initializeCommand": ".devcontainer/scripts/initialize.sh",
+    "initializeCommand": ".devcontainer/lifecycle/run.sh --profile dev initializeCommand",
+    // The lifecycle scripts are looked up and executed by the dispatcher, see .devcontainer/lifecycle/README.md
     "postStartCommand": {
-        "Setup binfmt support": ".devcontainer/scripts/setup_binfmt_support.sh",
-        "Setup kas git config": ".devcontainer/scripts/setup_kas_gitconfig.sh",
-        "Check credentials": ".devcontainer/scripts/setup_credentials.sh --check",
-        "Setup target connections": ".devcontainer/scripts/setup_targets.sh",
-        "Entering container": ".devcontainer/scripts/enter_container.sh",
+        "Run postStartCommand lifecycle script": ".devcontainer/lifecycle/run.sh --profile dev postStartCommand --check",
         "Run optional user postStartCommand": "if [ -f .devcontainer/post_start_hook.sh ]; then bash .devcontainer/post_start_hook.sh; fi"
     },
     "postCreateCommand": {
-        "Setup persistent bash history": ".devcontainer/scripts/setup_command_history.sh",
-        "Setup agent worktrees": "sudo mkdir -p /workspace.worktrees && sudo chown developer:developer /workspace.worktrees",
+        "Run postCreateCommand lifecycle script": ".devcontainer/lifecycle/run.sh --profile dev postCreateCommand",
         "Run optional user postCreateCommand": "if [ -f .devcontainer/post_create_hook.sh ]; then bash .devcontainer/post_create_hook.sh; fi"
     },
     "containerEnv": {

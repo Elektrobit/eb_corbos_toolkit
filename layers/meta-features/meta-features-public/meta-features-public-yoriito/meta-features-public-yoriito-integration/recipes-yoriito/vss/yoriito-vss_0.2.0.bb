@@ -9,7 +9,7 @@ SECTION = "misc"
 LICENSE = "Apache-2.0"
 
 SRC_URI = "https://github.com/yoriito/yoriito-vss/archive/refs/tags/v${PV}.tar.gz;downloadfilename=${PN}-${PV}.tar.gz;name=src"
-SRC_URI[src.sha256sum] = "9aba7f8fb0e51a9af270617abf29e4702aa3473ffc5ac3f70364153b12cb51bd"
+SRC_URI[src.sha256sum] = "f4b15c5820095276f8e1c62a51db9b65c7c06c8524a49e5cdf1eccfd32ba1a61"
 
 # Debian packaging files, fetched as local files and placed into ${S}/debian
 # so that ISAR can build the package from source via dpkg-buildpackage.

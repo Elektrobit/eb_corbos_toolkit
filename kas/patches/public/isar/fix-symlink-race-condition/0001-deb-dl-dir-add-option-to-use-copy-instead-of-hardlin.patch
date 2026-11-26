@@ -1,0 +1,76 @@
+From 8917f7409bad8a65f6418ce61fe152f48abe4613 Mon Sep 17 00:00:00 2001
+From: Elektrobit <info@elektrobit.com>
+Date: Thu, 9 Apr 2026 09:12:08 +0000
+Subject: [PATCH] deb-dl-dir: add option to use copy instead of hardlinks for
+ cache import and export
+
+On overlay2-based filesystems (e.g. OKD CI runners), the deb_dl_dir_import
+and deb_dl_dir_export functions can trigger intermittent dpkg failures:
+
+  dpkg: error: cannot stat pathname '/tmp/apt-dpkg-install-.../foo.deb':
+  No such file or directory
+
+The root cause is that ln -Pf (used to import and export cached .deb files)
+is not atomic on overlay2. It first unlinks the target, then creates a new
+link. When multiple BitBake tasks run deb_dl_dir_import and deb_dl_dir_export
+concurrently against the same shared DEBDIR, a race window exists where
+apt's internal link() call to stage files for dpkg can encounter ENOENT.
+
+Fixing the import path alone is insufficient because deb_dl_dir_export
+re-introduces hardlinks between the chroot's archives and the shared DEBDIR
+just before the install step. A concurrent export from another task can then
+corrupt the shared inode on overlay2.
+
+Introduce DEB_DL_DIR_COPY_ONLY to optionally use cp -n instead of ln -Pf in
+both import and export paths, giving each chroot independent file copies that
+are not affected by concurrent hardlink manipulation. The default remains
+unchanged (hardlinks with copy fallback).
+
+Signed-off-by: Elektrobit <info@elektrobit.com>
+---
+ meta/classes-recipe/deb-dl-dir.bbclass | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/meta/classes-recipe/deb-dl-dir.bbclass b/meta/classes-recipe/deb-dl-dir.bbclass
+index 27d1fb24..c666dd2d 100644
+--- a/meta/classes-recipe/deb-dl-dir.bbclass
++++ b/meta/classes-recipe/deb-dl-dir.bbclass
+@@ -112,6 +112,8 @@ dbg_pkgs_download() {
+     done | xargs -r sudo -E chroot ${rootfs} sh -c '/usr/bin/apt-get -y --download-only install "$@"' --
+ }
+ 
++DEB_DL_DIR_COPY_ONLY ??= ""
++
+ deb_dl_dir_import() {
+     export pc="${DEBDIR}/${2}"
+     export rootfs="${1}"
+@@ -138,8 +140,12 @@ deb_dl_dir_import() {
+ 
+         find "${pc}" -type f -iname "*\.deb" |\
+         while read p; do
+-            ln -Pf -t "${rootfs}"/var/cache/apt/archives/ "$p" 2>/dev/null ||
++            if [ -z "${DEB_DL_DIR_COPY_ONLY}" ]; then
++                ln -Pf -t "${rootfs}"/var/cache/apt/archives/ "$p" 2>/dev/null ||
++                    cp -n --no-preserve=owner -t "${rootfs}"/var/cache/apt/archives/ "$p"
++            else
+                 cp -n --no-preserve=owner -t "${rootfs}"/var/cache/apt/archives/ "$p"
++            fi
+         done
+     ) 9>"${pc}".lock
+ }
+@@ -167,8 +173,12 @@ deb_dl_dir_export() {
+             if [ -n "$package" ]; then
+                 cmp --silent "$package" "$p" && continue
+             fi
+-            ln -Pf "${p}" "${pc}" 2>/dev/null ||
++            if [ -z "${DEB_DL_DIR_COPY_ONLY}" ]; then
++                ln -Pf "${p}" "${pc}" 2>/dev/null ||
++                    cp -n "${p}" "${pc}"
++            else
+                 cp -n "${p}" "${pc}"
++            fi
+         done
+         chown -R ${owner} "${pc}"
+ EOSUDO
+-- 
+2.47.3

@@ -16,11 +16,16 @@
 # that grants the "userns" permission to the BitBake executable.
 #
 # This script is meant to run on the *host* (AppArmor is a host-kernel feature),
-# which is why it is invoked from initialize.sh, the only devcontainer
-# lifecycle script that runs on the host before the container starts.
+# which is why it is invoked from the initializeCommand lifecycle hook, the only
+# one that runs on the host before the container starts.
 #
 # It is intentionally non-fatal: it never aborts container startup. When it
 # cannot fix the problem automatically it prints clear manual instructions.
+#
+# The script is also a standalone diagnosis tool referenced by the User's Manual (troubleshooting),
+# so it keeps a stable path. The lifecycle hook script
+# lifecycle/initializeCommand.d/public/30_userns_check.build.sh runs it automatically. See
+# lifecycle/README.md.
 #
 # Usage: check_userns_restriction.sh [--yes] [--quiet]
 #   --yes    Apply the fix without asking for confirmation (implies sudo use).
@@ -34,7 +39,7 @@
 #   USERNS_ASSUME_YES=1    same as --yes
 
 # Note: no "set -e" here on purpose. This script must never abort the caller
-# (initialize.sh) and thereby prevent the container from starting.
+# (the lifecycle script) and thereby prevent the container from starting.
 set -uo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)

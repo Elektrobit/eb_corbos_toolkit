@@ -13,8 +13,8 @@ source ${SH_DIR}/includes/common/common.inc
 
 # Default values
 DEF_CONTAINER_ENGINE="docker"
-DEF_BUILD_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64:v25"
-DEF_DEV_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v25"
+DEF_BUILD_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-buildcontainer-amd64:v30"
+DEF_DEV_CONTAINER="ghcr.io/elektrobit/eb-corbos-toolkit-devcontainer-amd64:v30"
 DEF_CONTAINER_USER="developer"
 DEF_WORKSPACE_DIR=$(realpath ${SH_DIR}/..)
 
@@ -26,6 +26,7 @@ WORKSPACE_DIR="${DEF_WORKSPACE_DIR}"
 # Uninitialized variables
 CONTAINER_NAME=""
 USE_DEVCONTAINER=""
+DEV_LIFECYCLE=""
 EXTRA_DOCKER_OPTIONS="${EXTRA_DOCKER_OPTIONS:-}"
 CONTAINER_CMD=""
 
@@ -40,6 +41,7 @@ Tool-specific command-line options
   Option                         Help                                         Default
   -e/--engine <ENGINE>           Container engine                             [ $DEF_CONTAINER_ENGINE ]
   -d/--devcontainer              Use the development container variant
+  --dev-lifecycle                Also run the devcontainer-only lifecycle scripts (requires -d)
   -n/--name <IMAGE>              Container image name (overrides -d)
   -u/--user <USER>               Container user                               [ $DEF_CONTAINER_USER ]
   -w/--workspace <DIR>           Workspace directory to mount                 [ $DEF_WORKSPACE_DIR ]
@@ -67,6 +69,8 @@ check_commandline_arguments()
         || true
     [ -d "${WORKSPACE_DIR}" ] \
         || { echo "Workspace directory ${WORKSPACE_DIR} does not exist" ; exit 1; }
+    [ -z "${DEV_LIFECYCLE}" ] || [ -n "${USE_DEVCONTAINER}" ] \
+        || { echo "--dev-lifecycle requires --devcontainer" ; exit 1; }
 }
 
 resolve_container_name()
@@ -135,11 +139,11 @@ run_container()
     local rewrite_uid
     local interactive=""
     local docker_cmd
-    # DevContainer lifecycle scripts, must be executed to ensure correct setup of the container environment
-    local initialize=".devcontainer/scripts/initialize.sh"
-    local setup_binfmt_support="/workspace/.devcontainer/scripts/setup_binfmt_support.sh"
-    local setup_targets="/workspace/.devcontainer/scripts/setup_targets.sh"
-    local setup_credentials="/workspace/.devcontainer/scripts/setup_credentials.sh"
+    # DevContainer lifecycle scripts, must be executed to ensure correct setup of the container environment.
+    # By default, only the scripts required for building run (profile "build"), in the build container as well.
+    local lifecycle=".devcontainer/lifecycle/run.sh"
+    local lifecycle_profile="build"
+    if [ -n "${DEV_LIFECYCLE}" ]; then lifecycle_profile="dev"; fi
 
     resolve_container_name
     mounts=$(build_mounts)
@@ -156,10 +160,10 @@ run_container()
     verbose "User:             ${CONTAINER_USER}"
     verbose "Command:          ${CONTAINER_CMD}"
 
-    # The initialize script is the only one that is run on the host, before container start
-    if [ -f "${WORKSPACE_DIR}/${initialize}" ]; then
-        verbose "Running container initialization script: ${initialize}"
-        bash "${WORKSPACE_DIR}/${initialize}"
+    # The initializeCommand hook is the only one that is run on the host, before container start
+    if [ -f "${WORKSPACE_DIR}/${lifecycle}" ]; then
+        verbose "Running container initialization hook: ${lifecycle} --profile ${lifecycle_profile} initializeCommand"
+        bash "${WORKSPACE_DIR}/${lifecycle}" --profile "${lifecycle_profile}" initializeCommand
     fi
 
     # Assemble the full container engine command so it can be echoed/logged verbatim
@@ -172,9 +176,8 @@ run_container()
       ${CONTAINER_NAME} \
       bash -c \
         \"${rewrite_uid} && \
-        ${setup_binfmt_support} && \
-        runuser -u ${CONTAINER_USER} ${setup_credentials} && \
-        ${setup_targets} && \
+        runuser -u ${CONTAINER_USER} -- /workspace/${lifecycle} --profile ${lifecycle_profile} postCreateCommand && \
+        runuser -u ${CONTAINER_USER} -- /workspace/${lifecycle} --profile ${lifecycle_profile} postStartCommand --check && \
         runuser -u ${CONTAINER_USER} -- ${CONTAINER_CMD}\""
 
     # In non-interactive mode, print the exact command that will be executed
@@ -192,6 +195,10 @@ while [[ $# -gt 0 ]] ; do
     ;;
     -d|--devcontainer)
     USE_DEVCONTAINER=1
+    shift
+    ;;
+    --dev-lifecycle)
+    DEV_LIFECYCLE=1
     shift
     ;;
     -n|--name)

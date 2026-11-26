@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-source "${SCRIPT_DIR}/../lib/lib.sh"
+source "${SCRIPT_DIR}/../../../lib/lib.sh"
 dc_init_colors
 
 BINFMT_ID="qemu-aarch64"
